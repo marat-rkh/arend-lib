@@ -1,4 +1,5 @@
 \import Homotopy.Pushout
+\import Meta
 \import Paths
 \import Paths.Meta
 \import Relation.Equivalence
@@ -14,8 +15,6 @@
     | single (l l' : L) (l = l')
     | segments (l : L) (x1 yn : A) (l' : L) (l = toL x1) (Segments x1 yn toL toR) (toL yn = l')
 
-  -- TODO Consider using 'list of triples with a proof of the correct structure' approach
-  --  It is hard to work with the current representation.
   \data \infixl 6 ~> {L R : \Type} {x1 yn : A} {toL : A -> L} {toR : A -> R} (s1 s2 : Segments x1 yn toL toR) \with {
     | cons y1 x2 q1 p1 (one q2), (one q2') =>
     p-idp-one
@@ -24,17 +23,12 @@
     | cons y1 x2 q1 p1 (cons y2 x3 q2 p2 seg), (cons y2' x3' q2' p2' seg') =>
     p-idp-cons
       (y1=x2 : y1 = x2) (p1 with y1=x2 = idp)
-      (y2=y2' : y2 = y2') (q1 with y1=x2 *> q2 = q2' with inv y2=y2')
-      (x3=x3' : x3 = x3') (p2 = p2' with inv y2=y2' with inv x3=x3')
-      (seg = seg' with inv x3=x3')
+      (y2=y2' : y2 = y2') (q1 with y1=x2 *> q2 = q2' with y2=y2')
+      (x3=x3' : x3 = x3') (p2 = p2' with y2=y2' with x3=x3')
+      (seg = seg' with x3=x3')
   }
 
-  \meta \infixl 10 with x p => rewriteF p x
-
-  \func head-q {L R : \Type} {x1 yn : A} {toL : A -> L} {toR : A -> R} (seg : Segments x1 yn toL toR)
-    : \Sigma (y1 : A) (toR x1 = toR y1) \elim seg
-    | one q => (yn, q)
-    | cons y1 x2 q1 p1 seg => (y1, q1)
+  \meta \infixl 10 with x p => rewriteF p x <|> rewriteF (inv p) x
 
   --  \data \infixl 6 ~> {L R : \Type} {toL : A -> L} {toR : A -> R} (s1 s2 : Seq toL toR) \with {
   --    | segments l x1 yn l' p0 (cons y1 x2 q1 p1 (cons y2 x3 q2 p2 seg)) pn, s2 => Foo

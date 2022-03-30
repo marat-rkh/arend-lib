@@ -1,0 +1,53 @@
+\import Homotopy.Pushout
+\import Paths
+\import Paths.Meta
+\import Relation.Equivalence
+
+\class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
+  -- Example: (x1 : A), (q1 : g(x1) = g(y1)), (y1 : A), (p1 : f(y1) = f(x2)), (x2 : A), (q2 : g(x2) = g(y2)), (y2 : A)
+
+  \data Segments {L R : \Type} (x1 yn : A) (toL : A -> L) (toR : A -> R)
+    | one (toR x1 = toR yn)
+    | cons (y1 : A) (x2 : A) (toR x1 = toR y1) (toL y1 = toL x2) (Segments x2 yn toL toR)
+
+  \data Seq {L R : \Type} (toL : A -> L) (toR : A -> R)
+    | single (l l' : L) (l = l')
+    | segments (l : L) (x1 yn : A) (l' : L) (l = toL x1) (Segments x1 yn toL toR) (toL yn = l')
+
+  -- TODO Consider using 'list of triples with a proof of the correct structure' approach
+  --  It is hard to work with the current representation.
+  \data \infixl 6 ~> {L R : \Type} {x1 yn : A} {toL : A -> L} {toR : A -> R} (s1 s2 : Segments x1 yn toL toR) \with {
+    | cons y1 x2 q1 p1 (one q2), (one q2') =>
+    p-idp-one
+      (y1=x2 : y1 = x2) (p1 with y1=x2 = idp)
+      (q1 with y1=x2 *> q2 = q2')
+    | cons y1 x2 q1 p1 (cons y2 x3 q2 p2 seg), (cons y2' x3' q2' p2' seg') =>
+    p-idp-cons
+      (y1=x2 : y1 = x2) (p1 with y1=x2 = idp)
+      (y2=y2' : y2 = y2') (q1 with y1=x2 *> q2 = q2' with inv y2=y2')
+      (x3=x3' : x3 = x3') (p2 = p2' with inv y2=y2' with inv x3=x3')
+      (seg = seg' with inv x3=x3')
+  }
+
+  \meta \infixl 10 with x p => rewriteF p x
+
+  \func head-q {L R : \Type} {x1 yn : A} {toL : A -> L} {toR : A -> R} (seg : Segments x1 yn toL toR)
+    : \Sigma (y1 : A) (toR x1 = toR y1) \elim seg
+    | one q => (yn, q)
+    | cons y1 x2 q1 p1 seg => (y1, q1)
+
+  --  \data \infixl 6 ~> {L R : \Type} {toL : A -> L} {toR : A -> R} (s1 s2 : Seq toL toR) \with {
+  --    | segments l x1 yn l' p0 (cons y1 x2 q1 p1 (cons y2 x3 q2 p2 seg)) pn, s2 => Foo
+  --  }
+
+  \func code (p1 p2 : PushoutData f g) : \Set
+    | pinl b, pinl b' => Quotient {Seq f g} (~>)
+    | pinr c, pinr c' => {?}
+    | pinl b, pinr c => {?}
+    | pinr c, pinl b => {?}
+    | pglue a i, pinl b => {?}
+    | pglue a i, pinr c => {?}
+    | pinl b, pglue a i => {?}
+    | pinr c, pglue a i => {?}
+    | pglue a i, pglue a1 i1 => {?}
+}

@@ -24,9 +24,12 @@
     | two x y => one-seg (toR x = toR y)
     | cons x y xs => cons-seg (toR x = toR y) (toL y = toL (first xs)) (Segments xs toL toR)
 
-  \data Seq {L R : \Type} (toL : A -> L) (toR : A -> R)
-    | single (l l' : L) (l = l')
-    | segments (l : L) (xs : Points) (l' : L) (l = toL (first xs)) (Segments xs toL toR) (toL (last xs) = l')
+  \data SeqLL {L R : \Type} (toL : A -> L) (toR : A -> R)
+    | single-ll (l l' : L) (l = l')
+    | segments-ll (l : L) (xs : Points) (l' : L) (l = toL (first xs)) (Segments xs toL toR) (toL (last xs) = l')
+
+  \data SeqLR {L R : \Type} (toL : A -> L) (toR : A -> R)
+    | segments-lr (l : L) (xs : Points) (r : R) (l = toL (first xs)) (Segments xs toL toR) (toR (last xs) = r)
 
   \data \infixl 6 ~> {L R : \Type} {toL : A -> L} {toR : A -> R}
                      {xs : Points} (s : Segments xs toL toR)
@@ -62,9 +65,9 @@
       (s ~> s')
   }
 
-  \data \infix 6 ~~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : Seq toL toR) \with {
-    | segments l1 xs l2 p0 s pn, segments l1' xs' l2' p0' s' pn' =>
-    seq-reduce
+  \data \infix 6 ~ll~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : SeqLL toL toR) \with {
+    | segments-ll l1 xs l2 p0 s pn, segments-ll l1' xs' l2' p0' s' pn' =>
+    seq-ll-reduce
       (l1=l1' : l1 = l1')
       (l2=l2' : l2 = l2')
       (first-xs=-first-xs' : first xs = first xs') (p0 = p0' with l1=l1' with first-xs=-first-xs')
@@ -72,19 +75,32 @@
       (s ~> s')
   }
 
+  \data \infix 6 ~lr~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : SeqLR toL toR) \with {
+    | segments-lr l xs r p0 s pn, segments-lr l' xs' r' p0' s' pn' =>
+    seq-lr-reduce
+      (l=l' : l = l')
+      (r=r' : r = r')
+      (first-xs=-first-xs' : first xs = first xs') (p0 = p0' with l=l' with first-xs=-first-xs')
+      (last-xs=last-xs' : last xs = last xs') (pn = pn' with r=r' with last-xs=last-xs')
+      (s ~> s')
+  }
+
   \meta \infixl 10 with x p => rewriteF p x <|> rewriteF (inv p) x
 
-  \func \infix 6 <~~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : Seq toL toR) =>
-    seq ~~> seq' `Or` seq' ~~> seq
+  \func \infix 6 <~ll~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : SeqLL toL toR) =>
+    seq ~ll~> seq' `Or` seq' ~ll~> seq
+
+  \func \infix 6 <~lr~> {L R : \Type} {toL : A -> L} {toR : A -> R} (seq seq' : SeqLR toL toR) =>
+    seq ~lr~> seq' `Or` seq' ~lr~> seq
 
   \func code (p1 p2 : PushoutData f g) : \Set
-    | pinl b, pinl b' => Quotient {Seq f g} (<~~>)
-    | pinr c, pinr c' => {?}
-    | pinl b, pinr c => {?}
-    | pinr c, pinl b => {?}
+    | pinl b, pinl b' => Quotient {SeqLL f g} (<~ll~>) -- TODO add dependency on b and b'
+    | pinr c, pinr c' => Quotient {SeqLL g f} (<~ll~>)
+    | pinl b, pinr c => Quotient {SeqLR f g} (<~lr~>)
+    | pinr c, pinl b => Quotient {SeqLR g f} (<~lr~>)
     | pglue a i, pinl b => {?}
     | pglue a i, pinr c => {?}
     | pinl b, pglue a i => {?}
     | pinr c, pglue a i => {?}
-    | pglue a i, pglue a1 i1 => {?}
+    | pglue a i, pglue a' i' => {?}
 }

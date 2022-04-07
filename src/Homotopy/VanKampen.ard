@@ -1,102 +1,91 @@
 \import Data.List
 \import Data.Or
 \import Homotopy.Pushout
+\import Logic.Meta
 \import Meta
 \import Paths
 \import Paths.Meta
 \import Relation.Equivalence
 
 \class Sequences \noclassifying (A : \Type) {L R : \Type} (toL : A -> L) (toR : A -> R) {
-  \data Points
-    | two A A
-    | cons A A Points
+  -- Example:
+  -- (p0 : l = f(x1)),
+  -- (x1 : A), (q1 : g(x1) = g(y1)),
+  -- (y1 : A), (p1 : f(y1) = f(x2)),
+  -- (x2 : A), (q2 : g(x2) = g(y2)),
+  -- (y2 : A), (p2 : f(y2) = l')
 
-  \func first (xs : Points) : A
-    | two x y => x
-    | cons x y xs => x
+  \data SeqLL (l : L) (xs : List A) (l' : L) : \oo-Type \elim xs
+    | nil => ll (l = l')
+    | :: x xs => :l: (l = toL x) (SeqRL (toR x) xs l')
 
-  \func last (xs : Points) : A
-    | two x y => y
-    | cons x y xs => last xs
+  \data SeqRL (r : R) (xs : List A) (l : L) : \oo-Type \elim xs
+    | :: x xs => :r: (r = toR x) (SeqLL (toL x) xs l)
 
-  -- Example: (x1 : A), (q1 : g(x1) = g(y1)), (y1 : A), (p1 : f(y1) = f(x2)), (x2 : A), (q2 : g(x2) = g(y2)), (y2 : A)
-
-  \data Segments (xs : Points) \elim xs
-    | two x y => one-seg (toR x = toR y)
-    | cons x y xs => cons-seg (toR x = toR y) (toL y = toL (first xs)) (Segments xs)
-
-  \data \infixl 6 ~> {xs : Points} (s : Segments xs) {xs' : Points} (s' : Segments xs') \elim xs, s, xs', s' {
-    | cons x a (two a' y), cons-seg q1 p1 (one-seg q2), two x' y', (one-seg q2') =>
-    p-idp1
+  \data \infix 6 ~ll~> {l l' : L} {xs : List A} (seq : SeqLL l xs l') {xs' : List A} (seq' : SeqLL l xs' l') : \oo-Type
+  \elim xs, seq, xs', seq' {
+    | :: x (:: a (:: a' (:: y xs))), :l: p1 (:r: q1 (:l: p2 (:r: q2 seq))), :: x' (:: y' xs'), :l: p1' (:r: q12' seq') =>
+    ll-reduce-p-idp
+      (x=x' : x = x') (p1 = p1' with x=x')
+      (a=a' : a = a') (p2 with a=a' = idp)
+      (y=y' : y = y') (q1 with a=a' *> q2 = q12' with x=x' with y=y')
+      (xs=xs' : xs = xs') (seq = seq' with y=y' with xs=xs')
+    | :: a (:: a' (:: x xs)), :l: p1 (:r: q1 (:l: p2 seq)), :: x' xs', :l: p12' seq' =>
+    ll-reduce-q-idp
+      (a=a' : a = a') (q1 with a=a' = idp)
+      (x=x' : x = x') (p1 with a=a' *> p2 = p12' with x=x')
+      (xs=xs' : xs = xs') (seq = seq' with x=x' with xs=xs')
+    | :: x xs, :l: p seq, :: x' xs', :l: p' seq' =>
+    ll-reduce-cons
       (x=x' : x = x')
-      (a=a' : a = a') (p1 with a=a' = idp)
-      (y=y' : y = y') (q1 with a=a' *> q2 = q2' with x=x' with y=y')
+      (p = p' with x=x')
+      (seq ~rl~> seq' with x=x')
+  }
 
-    | cons x a (cons a' y xs), cons-seg q1 p1 (cons-seg q2 p2 s), cons x' y' xs', cons-seg q2' p2' s' =>
-    p-idp2
-      (x=x' : x = x')
-      (a=a' : a = a') (p1 with a=a' = idp)
-      (y=y' : y = y') (q1 with a=a' *> q2 = q2' with x=x' with y=y')
-      (xs=xs' : xs = xs') (p2 = p2' with y=y' with xs=xs')
-      (s = s' with xs=xs')
-
-    | cons x y (cons a a' xs), cons-seg q1 p1 (cons-seg q2 p2 s), cons x' y' xs', cons-seg q1' p1' s' =>
-    q-idp
-      (x=x' : x = x')
-      (y=y' : y = y') (q1 with x=x' with y=y' = q1')
+  \data \infix 6 ~rl~> {r : R} {l : L} {xs : List A} (seq : SeqRL r xs l) {xs' : List A} (seq' : SeqRL r xs' l) : \oo-Type
+  \elim xs, seq, xs', seq' {
+    | :: x (:: a (:: a' (:: y xs))), :r: q1 (:l: p1 (:r: q2 (:l: p2 seq))), :: x' (:: y' xs'), :r: q1' (:l: p12' seq') =>
+    rl-reduce-q-idp
+      (x=x' : x = x') (q1 = q1' with x=x')
       (a=a' : a = a') (q2 with a=a' = idp)
-      (xs=xs' : xs = xs') (p1 with a=a' *> p2 = p1' with y=y' with pmap first xs=xs')
-      (s = s' with xs=xs')
-
-    | cons x y xs, cons-seg q p s, cons x' y' xs', cons-seg q' p' s' =>
-    cons-reduce
+      (y=y' : y = y') (p1 with a=a' *> p2 = p12' with x=x' with y=y')
+      (xs=xs' : xs = xs') (seq = seq' with y=y' with xs=xs')
+    | :: a (:: a' (:: x xs)), :r: q1 (:l: p1 (:r: q2 seq)), :: x' xs', :r: q12' seq' =>
+    rl-reduce-p-idp
+      (a=a' : a = a') (p1 with a=a' = idp)
+      (x=x' : x = x') (q1 with a=a' *> q2 = q12' with x=x')
+      (xs=xs' : xs = xs') (seq = seq' with x=x' with xs=xs')
+    | :: x xs, :r: q seq, :: x' xs', :r: q' seq' =>
+    rl-reduce-cons
       (x=x' : x = x')
-      (y=y' : y = y') (q = q' with x=x' with y=y')
-      (first-xs=first-xs' : first xs = first xs') (p = p' with y=y' with first-xs=first-xs')
-      (s ~> s')
-  }
-
-  \data SeqLL (l l' : L)
-    | single-ll (l = l')
-    | segments-ll (xs : Points) (l = toL (first xs)) (Segments xs) (toL (last xs) = l')
-
-  \data SeqLR (l : L) (r : R)
-    | segments-lr (xs : Points) (l = toL (first xs)) (Segments xs) (toR (last xs) = r)
-
-  \data \infix 6 ~ll~> {l l' : L} (seq seq' : SeqLL l l') \with {
-    | segments-ll xs p0 s pn, segments-ll xs' p0' s' pn' =>
-    seq-ll-reduce
-      (first-xs=-first-xs' : first xs = first xs') (p0 = p0' with first-xs=-first-xs')
-      (last-xs=last-xs' : last xs = last xs') (pn = pn' with last-xs=last-xs')
-      (s ~> s')
-  }
-
-  \data \infix 6 ~lr~> {l : L} {r : R} (seq seq' : SeqLR l r) \with {
-    | segments-lr xs p0 s pn, segments-lr xs' p0' s' pn' =>
-    seq-lr-reduce
-      (first-xs=-first-xs' : first xs = first xs') (p0 = p0' with first-xs=-first-xs')
-      (last-xs=last-xs' : last xs = last xs') (pn = pn' with last-xs=last-xs')
-      (s ~> s')
+      (q = q' with x=x')
+      (seq ~ll~> seq' with x=x')
   }
 
   \meta \infixl 10 with x p => rewriteF p x <|> rewriteF (inv p) x
 
-  \func \infix 6 <~ll~> {l l' : L} (seq seq' : SeqLL l l') =>
+  \func \infix 6 <~ll~> {l l' : L} {xs : List A} (seq : SeqLL l xs l') {xs' : List A} (seq' : SeqLL l xs' l') =>
     seq ~ll~> seq' `Or` seq' ~ll~> seq
 
-  \func \infix 6 <~lr~> {l : L} {r : R} (seq seq' : SeqLR l r) =>
-    seq ~lr~> seq' `Or` seq' ~lr~> seq
+  \func \infix 6 <~rl~> {r : R} {l : L} {xs : List A} (seq : SeqRL r xs l) {xs' : List A} (seq' : SeqRL r xs' l) =>
+    seq ~rl~> seq' `Or` seq' ~rl~> seq
+
+  --  \func append-toR {l : L} {a : A} (seq : SeqLL l (toL a)) : SeqLR l (toR a)
+  --    | ll p => lr {?} {?} {?} {?}
+  --    | lrl xs p s p1 => {?}
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
-  \instance SeqBC : Sequences A f g
-  \instance SeqCB : Sequences A g f
+  \instance SequencesBC : Sequences A f g
 
+  \instance SequencesCB : Sequences A g f
+
+  -- TODO ugly
   \func code (p1 p2 : PushoutData f g) : \Set
-    | pinl b, pinl b' => Quotient {SeqBC.SeqLL b b'} (SeqBC.<~ll~>)
-    | pinr c, pinr c' => Quotient {SeqCB.SeqLL c c'} (SeqCB.<~ll~>)
-    | pinl b, pinr c => Quotient {SeqBC.SeqLR b c} (SeqBC.<~lr~>)
-    | pinr c, pinl b => Quotient {SeqCB.SeqLR c b} (SeqCB.<~lr~>)
+    | pinl b, pinl b' => Quotient {Given {xs} (SequencesBC.SeqLL b xs b')} (__.2 SequencesBC.<~ll~> __.2)
+    | pinr c, pinr c' => Quotient {Given {xs} (SequencesCB.SeqLL c xs c')} (__.2 SequencesCB.<~ll~> __.2)
+    | pinl b, pinr c => Quotient {Given {xs} (SequencesCB.SeqRL b xs c)} (__.2 SequencesCB.<~rl~> __.2)
+    | pinr c, pinl b => Quotient {Given {xs} (SequencesBC.SeqRL c xs b)} (__.2 SequencesBC.<~rl~> __.2)
     | pinl b, pglue a i => {?}
     | pinr c, pglue a i => {?}
     | pglue a i, pinl b => {?}

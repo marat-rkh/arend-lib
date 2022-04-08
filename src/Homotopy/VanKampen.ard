@@ -23,7 +23,7 @@
     | :: xs y => \infixl 5 :l: (SegmentsLR l xs (toR y)) (toL y = l')
 
   \data SegmentsLR (l : L) (xs : Points) (r : R) : \oo-Type \elim xs
-    | :: xs x => :r: (SegmentsLL l xs (toL x)) (toR x = r)
+    | :: xs x => \infixl 5 :r: (SegmentsLL l xs (toL x)) (toR x = r)
 
   \func SeqLL (l l' : L) => Given {xs} (SegmentsLL l xs l')
 
@@ -91,9 +91,9 @@
   \func \infix 6 <~lr~> {r : R} {l : L} (seq : SeqLR l r) (seq' : SeqLR l r) =>
     seq ~lr~> seq' `Or` seq' ~lr~> seq
 
-  --  \func append-toR {l : L} {a : A} (seq : SeqLL l (toL a)) : SeqLR l (toR a)
-  --    | ll p => lr {?} {?} {?} {?}
-  --    | lrl xs p s p1 => {?}
+  \func append-toR {l : L} {a : A} (seq : SeqLL l (toL a)) : SeqLR l (toR a) => (seq.1 :: a, seq.2 :r: idp)
+
+  \func append-toL {l : L} {a : A} (seq : SeqLR l (toR a)) : SeqLL l (toL a) => (seq.1 :: a, seq.2 :l: idp)
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {

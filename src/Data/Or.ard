@@ -10,4 +10,8 @@
       | inl a, inr b => absurd (e a b)
       | inr b, inl a => absurd (e a b)
       | inr b, inr b' => pmap inr (Path.inProp b b')
+
+    \func map {A B C D : \Type} (f : A -> C) (g : B -> D) (t : A `Or` B) : C `Or` D \elim t
+      | inl a => inl (f a)
+      | inr b => inr (g b)
   }

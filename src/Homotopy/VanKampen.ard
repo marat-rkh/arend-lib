@@ -1,4 +1,6 @@
 \import Data.Or
+\import Equiv
+\import Equiv.Sigma
 \import Homotopy.Pushout
 \import Logic.Meta
 \import Meta
@@ -85,15 +87,52 @@
 
   \meta \infixl 10 with x p => rewriteF p x <|> rewriteF (inv p) x
 
-  \func \infix 6 <~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') =>
-    seq ~ll~> seq' `Or` seq' ~ll~> seq
+  \func \infix 6 <~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') => seq ~ll~> seq' `Or` seq' ~ll~> seq
 
-  \func \infix 6 <~lr~> {r : R} {l : L} (seq : SeqLR l r) (seq' : SeqLR l r) =>
-    seq ~lr~> seq' `Or` seq' ~lr~> seq
+  \func \infix 6 <~lr~> {r : R} {l : L} (seq : SeqLR l r) (seq' : SeqLR l r) => seq ~lr~> seq' `Or` seq' ~lr~> seq
 
-  \func append-toR {l : L} {a : A} (seq : SeqLL l (toL a)) : SeqLR l (toR a) => (seq.1 :: a, seq.2 :r: idp)
+  \func SeqLL/~ (l l' : L) => Quotient {SeqLL l l'} (<~ll~>)
 
-  \func append-toL {l : L} {a : A} (seq : SeqLR l (toR a)) : SeqLL l (toL a) => (seq.1 :: a, seq.2 :l: idp)
+  \func SeqLR/~ (l : L) (r : R) => Quotient {SeqLR l r} (<~lr~>)
+
+  \func seq-ll-equiv-seq-lr (l : L) (a : A) : QEquiv {SeqLL/~ l (toL a)} {SeqLR/~ l (toR a)} \cowith
+    | f (seq/~ : SeqLL/~ l (toL a)) : SeqLR/~ l (toR a) \with {
+      | in~ seq => in~ (seq `:r:idp)
+      | ~-equiv seq1 seq2 equiv i => ~-equiv (seq1 `:r:idp) (seq2 `:r:idp) (equiv-lemma1 equiv) i
+    }
+    | ret (seq/~ : SeqLR/~ l (toR a)) : SeqLL/~ l (toL a) \with {
+      | in~ seq => in~ (seq `:l:idp)
+      | ~-equiv seq1 seq2 equiv i => ~-equiv (seq1 `:l:idp) (seq2 `:l:idp) (equiv-lemma2 equiv) i
+    }
+    | ret_f => \case \elim __ \with {
+      | in~ seq => path (~-equiv (seq `:r:idp `:l:idp) seq (equiv-lemma3 seq))
+    }
+    | f_sec => \case \elim __ \with {
+      | in~ seq => path (~-equiv (seq `:l:idp `:r:idp) seq (equiv-lemma4 seq))
+    }
+    \where {
+      \func :r:idp {l : L} {a : A} (seq : SeqLL l (toL a)) : SeqLR l (toR a) \elim seq
+        | (xs, seg) => (xs :: a, seg :r: idp)
+
+      \func :l:idp {l : L} {a : A} (seq : SeqLR l (toR a)) : SeqLL l (toL a) \elim seq
+        | (xs, seg) => (xs :: a, seg :l: idp)
+
+      \func equiv-lemma1 {l : L} {a : A} {seq : SeqLL l (toL a)} {seq' : SeqLL l (toL a)} (equiv : seq <~ll~> seq')
+        : seq `:r:idp <~lr~> seq' `:r:idp =>
+        Or.map (lr-reduce-cons idp __ idp) (lr-reduce-cons idp __ idp) equiv
+
+      \func equiv-lemma2 {l : L} {a : A} {seq : SeqLR l (toR a)} {seq' : SeqLR l (toR a)} (equiv : seq <~lr~> seq')
+        : seq `:l:idp <~ll~> seq' `:l:idp =>
+        Or.map (ll-reduce-cons idp __ idp) (ll-reduce-cons idp __ idp) equiv
+
+      \func equiv-lemma3 {l : L} {a : A} (seq : SeqLL l (toL a)) : seq `:r:idp `:l:idp <~ll~> seq
+        | (nil, ll p) => {?} -- TODO update reduction rules to handle this case
+        | (:: xs y, :l: seg p) => inl (ll-reduce-q-idp idp idp idp idp idp idp)
+
+      \func equiv-lemma4 {l : L} {a : A} (seq : SeqLR l (toR a)) : seq `:l:idp `:r:idp <~lr~> seq
+        | (nil, ())
+        | (:: xs y, :r: seg p) => inl (lr-reduce-p-idp idp idp idp idp idp idp)
+    }
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
@@ -102,13 +141,13 @@
   \instance SequencesCB : Sequences A g f
 
   \func code (p1 p2 : PushoutData f g) : \Set
-    | pinl b, pinl b' => Quotient {SequencesBC.SeqLL b b'} (SequencesBC.<~ll~>)
-    | pinr c, pinr c' => Quotient {SequencesCB.SeqLL c c'} (SequencesCB.<~ll~>)
-    | pinl b, pinr c => Quotient {SequencesBC.SeqLR b c} (SequencesBC.<~lr~>)
-    | pinr c, pinl b => Quotient {SequencesCB.SeqLR c b} (SequencesCB.<~lr~>)
-    | pinl b, pglue a i => {?}
-    | pinr c, pglue a i => {?}
-    | pglue a i, pinl b => {?}
+    | pinl b, pinl b' => SequencesBC.SeqLL/~ b b'
+    | pinr c, pinr c' => SequencesCB.SeqLL/~ c c'
+    | pinl b, pinr c => SequencesBC.SeqLR/~ b c
+    | pinr c, pinl b => SequencesCB.SeqLR/~ c b
+    | pinl b, pglue a i => equiv= (SequencesBC.seq-ll-equiv-seq-lr b a) @ i
+    | pinr c, pglue a i => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr c a)) @ i
+    | pglue a i, pinl b => {?} -- TODO try to prove that Seq is equiv to it's inverse and use that fact
     | pglue a i, pinr c => {?}
-    | pglue a i, pglue a' i' => {?}
+    | pglue a i, pglue a' i' => {?} -- TODO be brave
 }

@@ -20,11 +20,11 @@
     | nil
     | \infixl 5 :: Points A
 
-  \data SegmentsLL (l : L) (xs : Points) (l' : L) : \oo-Type \elim xs
+  \data SegmentsLL (l : L) (xs : Points) (l' : L) : \Type \elim xs
     | nil => ll (l = l')
     | :: xs y => \infixl 5 :l: (SegmentsLR l xs (toR y)) (toL y = l')
 
-  \data SegmentsLR (l : L) (xs : Points) (r : R) : \oo-Type \elim xs
+  \data SegmentsLR (l : L) (xs : Points) (r : R) : \Type \elim xs
     | :: xs x => \infixl 5 :r: (SegmentsLL l xs (toL x)) (toR x = r)
 
   \func SeqLL (l l' : L) => Given {xs} (SegmentsLL l xs l')

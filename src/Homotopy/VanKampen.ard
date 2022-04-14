@@ -8,7 +8,7 @@
 \import Paths.Meta
 \import Relation.Equivalence
 
-\class Sequences \noclassifying (A : \Type) {L R : \Type} (toL : A -> L) (toR : A -> R) {
+\class Sequences \noclassifying {A : \Type} {L R : \Type} (toL : A -> L) (toR : A -> R) {
   -- Example:
   -- (p0 : l = f(x1)),
   -- (x1 : A), (q1 : g(x1) = g(y1)),
@@ -119,9 +119,9 @@
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
-  \instance SequencesBC : Sequences A f g
+  \instance SequencesBC : Sequences f g
 
-  \instance SequencesCB : Sequences A g f
+  \instance SequencesCB : Sequences g f
 
   \func code (p1 p2 : PushoutData f g) : \Set
     | pinl b, pinl b' => SequencesBC.SeqLL/~ b b'

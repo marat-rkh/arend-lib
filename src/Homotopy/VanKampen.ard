@@ -8,7 +8,7 @@
 \import Paths.Meta
 \import Relation.Equivalence
 
-\class Sequences \noclassifying {A : \Type} {L R : \Type} (toL : A -> L) (toR : A -> R) {
+\class Sequence \noclassifying {A : \Type} {L R : \Type} (toL : A -> L) (toR : A -> R) {
   -- Example:
   -- (p0 : l = f(x1)),
   -- (x1 : A), (q1 : g(x1) = g(y1)),
@@ -119,17 +119,18 @@
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
-  \instance SequencesBC : Sequences f g
+  \instance SequenceBC : Sequence f g
 
-  \instance SequencesCB : Sequences g f
+  \instance SequenceCB : Sequence g f
 
   \func code (p1 p2 : PushoutData f g) : \Set
-    | pinl b, pinl b' => SequencesBC.SeqLL/~ b b'
-    | pinr c, pinr c' => SequencesCB.SeqLL/~ c c'
-    | pinl b, pinr c => SequencesBC.SeqLR/~ b c
-    | pinr c, pinl b => SequencesCB.SeqLR/~ c b
-    | pinl b, pglue a i => equiv= (SequencesBC.seq-ll-equiv-seq-lr b a) @ i
-    | pinr c, pglue a i => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr c a)) @ i
+    | pinl b, pinl b' => SequenceBC.SeqLL/~ b b'
+    | pinr c, pinr c' => SequenceCB.SeqLL/~ c c'
+    | pinl b, pinr c => SequenceBC.SeqLR/~ b c
+    | pinr c, pinl b => SequenceCB.SeqLR/~ c b
+    -- TODO if I extract the left argument of @ to a function, typechecking fails for some reason.
+    | pinl b, pglue a i => equiv= (SequenceBC.seq-ll-equiv-seq-lr b a) @ i
+    | pinr c, pglue a i => inv (equiv= (SequenceCB.seq-ll-equiv-seq-lr c a)) @ i
     | pglue a i, pinl b => {?} -- TODO try to prove that Seq is equiv to it's inverse and use that fact
     | pglue a i, pinr c => {?}
     | pglue a i, pglue a' i' => {?} -- TODO be brave

@@ -20,6 +20,10 @@
     | nil
     | \infixl 5 :: Points A
 
+  \func \infixl 5 ++ (xs ys : Points) : Points \elim ys
+    | nil => xs
+    | :: ys y => xs ++ ys :: y
+
   \data SegmentsLL (l : L) (xs : Points) (l' : L) : \Type \elim xs
     | nil => ll (l = l')
     | :: xs y => \infixl 5 :l: (SegmentsLR l xs (toR y)) (toL y = l')
@@ -30,6 +34,8 @@
   \func SeqLL (l l' : L) => Given {xs} (SegmentsLL l xs l')
 
   \func SeqLR (l : L) (r : R) => Given {xs} (SegmentsLR l xs r)
+
+  -- TODO why do we need this \oo-Type?
 
   \data \infix 6 ~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') : \oo-Type \elim seq, seq' {
     | ((:: (:: nil a) a'), :l: (:r: (ll p1) q1) p2), (nil, ll p12') =>
@@ -118,10 +124,109 @@
     }
 }
 
+\class Sequences \noclassifying {A : \Type} {L R : \Type} {toL : A -> L} {toR : A -> R}
+                                (Seq : Sequence toL toR) (InvSeq : Sequence toR toL) {
+  \func SeqLL => Seq.SeqLL
+
+  \func SeqLL/~ => Seq.SeqLL/~
+
+  \func SeqLR => Seq.SeqLR
+
+  \func SeqLR/~ => Seq.SeqLR/~
+
+  \func SeqRR => InvSeq.SeqLL
+
+  \func SeqRR/~ => InvSeq.SeqLL/~
+
+  \func SeqRL => InvSeq.SeqLR
+
+  \func SeqRL/~ => InvSeq.SeqLR/~
+
+  \func inv-seq-ll (l l' : L) : SeqLL/~ l l' = SeqLL/~ l' l => equiv= (equiv l l')
+    \where {
+      \open Sequence (nil, ::, ++, <~ll~>, <~lr~>)
+      -- TODO false positive
+      \open Sequence.SegmentsLL (ll, :l:)
+      \open Sequence.SegmentsLR (:r:)
+      \open Sequence.~ll~> (ll-reduce-cons)
+      \open Sequence.~lr~> (lr-reduce-cons)
+
+      \func equiv (l l' : L) : QEquiv {SeqLL/~ l l'} {SeqLL/~ l' l} => \new QEquiv {
+        | f => \case \elim __ \with {
+          | in~ seq => {?}
+          | ~-equiv x y r i => {?}
+        }
+        | ret => {?}
+        | ret_f => {?}
+        | f_sec => {?}
+      }
+
+      \func reverse {l l' : L} (seq : SeqLL l l') : SeqLL l' l
+        | (nil, ll p) => (nil, ll (inv p))
+        | (:: nil y, :l: () p)
+        | (:: (:: xs x) y, :l: (:r: seg q) p) =>
+          -- TODO hard... try to define equivalence on SeqLL level instead of SeqLL/~
+          \let (rev-xs, rev-seg) => reverse (xs, seg) \in (nil :: y :: x ++ rev-xs, {?})
+    }
+
+  \func inv-seq-rl (l : L) (r : R) : SeqRL/~ r l = SeqLR/~ l r => equiv= (\new QEquiv {_} {_} {
+    | f => {?}
+    | ret => {?}
+    | ret_f => {?}
+    | f_sec => {?}
+  })
+
+  \func seq-ll-equiv-seq-lr2 (a : A) (l : L) : QEquiv {SeqLL/~ (toL a) l} {SeqRL/~ (toR a) l} =>
+    rewrite (inv-seq-ll (toL a) l) (rewrite (inv-seq-rl l (toR a)) (Seq.seq-ll-equiv-seq-lr l a))
+
+  --  \func seq-ll-equiv-seq-lr2 (a : A) (l : L) : QEquiv {SeqLL/~ (toL a) l} {SeqRL/~ (toR a) l} \cowith
+  --    | f => \case \elim __ \with {
+  --      | in~ seq => in~ (idp:r: seq)
+  --      | ~-equiv seq1 seq2 equiv i => ~-equiv (idp:r: seq1) (idp:r: seq2) (equiv-lemma1 equiv) i
+  --    }
+  --    | ret => \case \elim __ \with {
+  --      | in~ seq => in~ (idp:l: seq)
+  --      | ~-equiv seq1 seq2 equiv i => ~-equiv (idp:l: seq1) (idp:l: seq2) {?} i
+  --    }
+  --    | ret_f => {?}
+  --    | f_sec => {?}
+  --    \where {
+  --      \open Sequence (nil, ::, <~ll~>, <~lr~>)
+  --      -- TODO false positive
+  --
+--      \open Sequence.SegmentsLL (ll, :l:)
+  --      \open Sequence.SegmentsLR (:r:)
+  --      \open Sequence.~ll~> (ll-reduce-cons)
+  --      \open Sequence.~lr~> (lr-reduce-cons)
+  --
+--      \func idp:r: {l : L} {a : A} (seq : SeqLL (toL a) l) : SeqRL (toR a) l \elim seq
+  --        | (nil, ll p) => (nil :: a, ll idp :r: p)
+  --        | (:: nil y, :l: () p)
+  --        | (:: (:: xs x) y, :l: (:r: seg q) p) =>
+  --          \let (a::xs, idp:r:seg) => idp:r: (xs, seg)
+  --          \in (a::xs :: x :: y, idp:r:seg :l: q :r: p)
+  --
+--      \func idp:l: {l : L} {a : A} (seq : SeqRL (toR a) l) : SeqLL (toL a) l \elim seq
+  --        | (nil, ())
+  --        | (:: nil x, :r: (ll p) q) => (nil :: a :: x, ll idp :r: p :l: q)
+  --        | (:: (:: xs y) x, :r: (:l: seg p) q) =>
+  --          \let (a::xs, idp:l:seg) => idp:l: (xs, seg)
+  --          \in (a::xs :: y :: x, idp:l:seg :r: p :l: q)
+  --
+--      \func equiv-lemma1 {l : L} {a : A} {seq1 : SeqLL (toL a) l} {seq2 : SeqLL (toL a) l} (equiv : seq1 Seq.<~ll~> seq2)
+  --        : idp:r: seq1 InvSeq.<~lr~> idp:r: seq2 =>
+  --        {?} -- TODO we do not have a rule for such redunctions...
+  --    }
+}
+
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
   \instance SequenceBC : Sequence f g
 
   \instance SequenceCB : Sequence g f
+
+  \instance SequencesBC : Sequences SequenceBC SequenceCB
+
+  \instance SequencesCB : Sequences SequenceCB SequenceBC
 
   \func code (p1 p2 : PushoutData f g) : \Set
     | pinl b, pinl b' => SequenceBC.SeqLL/~ b b'
@@ -131,7 +236,7 @@
     -- TODO if I extract the left argument of @ to a function, typechecking fails for some reason.
     | pinl b, pglue a i => equiv= (SequenceBC.seq-ll-equiv-seq-lr b a) @ i
     | pinr c, pglue a i => inv (equiv= (SequenceCB.seq-ll-equiv-seq-lr c a)) @ i
-    | pglue a i, pinl b => {?} -- TODO try to prove that Seq is equiv to it's inverse and use that fact
-    | pglue a i, pinr c => {?}
+    | pglue a i, pinl b => equiv= (SequencesBC.seq-ll-equiv-seq-lr2 a b) @ i
+    | pglue a i, pinr c => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr2 a c)) @ i
     | pglue a i, pglue a' i' => {?} -- TODO be brave
 }

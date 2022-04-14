@@ -33,16 +33,6 @@
 
   \data \infix 6 ~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') : \oo-Type
   \elim seq, seq' {
-    | (:: (:: (:: (:: xs x) a) a') y, :l: (:r: (:l: (:r: seq q1) p1) q2) p2), (:: (:: xs' x') y', :l: (:r: seq' q12') p2') =>
-    ll-reduce-p-idp
-      (xs=xs' : xs = xs')
-      (x=x' : x = x')
-      (seq = seq' with xs=xs' with x=x')
-      (a=a' : a = a')
-      (p1 with a=a' = idp)
-      (y=y' : y = y')
-      (q1 with a=a' *> q2 = q12' with x=x' with y=y')
-      (p2 = p2' with y=y')
     | ((:: (:: (:: xs y) a) a'), :l: (:r: (:l: seq p1) q1) p2), (:: xs' y', :l: seq' p12') =>
     ll-reduce-q-idp
       (xs=xs' : xs = xs')
@@ -60,16 +50,6 @@
 
   \data \infix 6 ~lr~> {l : L} {r : R} (seq : SeqLR l r) (seq' : SeqLR l r) : \oo-Type
   \elim seq, seq' {
-    | (:: (:: (:: (:: xs x) a) a') y, :r: (:l: (:r: (:l: seq p1) q1) p2) q2), (:: (:: xs' x') y', :r: (:l: seq' p12') q2') =>
-    lr-reduce-q-idp
-      (xs=xs' : xs = xs')
-      (x=x' : x = x')
-      (seq = seq' with xs=xs' with x=x')
-      (a=a' : a = a')
-      (q1 with a=a' = idp)
-      (y=y' : y = y')
-      (p1 with a=a' *> p2 = p12' with x=x' with y=y')
-      (q2 = q2' with y=y')
     | ((:: (:: (:: xs y) a) a'), :r: (:l: (:r: seq q1) p1) q2), (:: xs' y', :r: seq' q12') =>
     lr-reduce-p-idp
       (xs=xs' : xs = xs')

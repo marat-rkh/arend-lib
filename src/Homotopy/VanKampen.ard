@@ -31,10 +31,14 @@
 
   \func SeqLR (l : L) (r : R) => Given {xs} (SegmentsLR l xs r)
 
-  \data \infix 6 ~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') : \oo-Type
-  \elim seq, seq' {
+  \data \infix 6 ~ll~> {l l' : L} (seq : SeqLL l l') (seq' : SeqLL l l') : \oo-Type \elim seq, seq' {
+    | ((:: (:: nil a) a'), :l: (:r: (ll p1) q1) p2), (nil, ll p12') =>
+    ll-reduce-q-idp1
+      (a=a' : a = a')
+      (q1 with a=a' = idp)
+      (p1 with a=a' *> p2 = p12')
     | ((:: (:: (:: xs y) a) a'), :l: (:r: (:l: seq p1) q1) p2), (:: xs' y', :l: seq' p12') =>
-    ll-reduce-q-idp
+    ll-reduce-q-idp2
       (xs=xs' : xs = xs')
       (y=y' : y = y')
       (seq = seq' with xs=xs' with y=y')
@@ -48,8 +52,7 @@
       (p = p' with y=y')
   }
 
-  \data \infix 6 ~lr~> {l : L} {r : R} (seq : SeqLR l r) (seq' : SeqLR l r) : \oo-Type
-  \elim seq, seq' {
+  \data \infix 6 ~lr~> {l : L} {r : R} (seq : SeqLR l r) (seq' : SeqLR l r) : \oo-Type \elim seq, seq' {
     | ((:: (:: (:: xs y) a) a'), :r: (:l: (:r: seq q1) p1) q2), (:: xs' y', :r: seq' q12') =>
     lr-reduce-p-idp
       (xs=xs' : xs = xs')
@@ -106,8 +109,8 @@
         Or.map (ll-reduce-cons idp __ idp) (ll-reduce-cons idp __ idp) equiv
 
       \func equiv-lemma3 {l : L} {a : A} (seq : SeqLL l (toL a)) : seq `:r:idp `:l:idp <~ll~> seq
-        | (nil, ll p) => {?} -- TODO update reduction rules to handle this case
-        | (:: xs y, :l: seg p) => inl (ll-reduce-q-idp idp idp idp idp idp idp)
+        | (nil, ll p) => inl (ll-reduce-q-idp1 idp idp idp)
+        | (:: xs y, :l: seg p) => inl (ll-reduce-q-idp2 idp idp idp idp idp idp)
 
       \func equiv-lemma4 {l : L} {a : A} (seq : SeqLR l (toR a)) : seq `:l:idp `:r:idp <~lr~> seq
         | (nil, ())

@@ -234,9 +234,9 @@
     | pinl b, pinr c => SequenceBC.SeqLR/~ b c
     | pinr c, pinl b => SequenceCB.SeqLR/~ c b
     -- TODO if I extract the left argument of @ to a function, typechecking fails for some reason.
-    | pinl b, pglue a i => equiv= (SequenceBC.seq-ll-equiv-seq-lr b a) @ i
-    | pinr c, pglue a i => inv (equiv= (SequenceCB.seq-ll-equiv-seq-lr c a)) @ i
-    | pglue a i, pinl b => equiv= (SequencesBC.seq-ll-equiv-seq-lr2 a b) @ i
-    | pglue a i, pinr c => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr2 a c)) @ i
+    | pinl b, pglue a => equiv= (SequenceBC.seq-ll-equiv-seq-lr b a)
+    | pinr c, pglue a => inv (equiv= (SequenceCB.seq-ll-equiv-seq-lr c a))
+    | pglue a, pinl b => equiv= (SequencesBC.seq-ll-equiv-seq-lr2 a b)
+    | pglue a, pinr c => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr2 a c))
     | pglue a i, pglue a' i' => {?} -- TODO be brave
 }

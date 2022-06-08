@@ -189,22 +189,18 @@
       \open Sequence.~ll~> (ll-reduce-cons)
       \open Sequence.~lr~> (lr-reduce-cons)
 
-      \func equiv (l l' : L) : QEquiv {SeqLL/~ l l'} {SeqLL/~ l' l} => \new QEquiv {
+      \func equiv (l l' : L) : QEquiv {SeqLL/~ l l'} {SeqLL/~ l' l} \cowith {
         | f => \case \elim __ \with {
-          | in~ seq => {?}
-          | ~-equiv x y r i => {?}
+          | in~ seq => in~ (Seq.reverse-seq-ll seq)
+          | ~-equiv seq1 seq2 r i => ~-equiv (Seq.reverse-seq-ll seq1) (Seq.reverse-seq-ll seq2) (equiv-lemma1 r) i
         }
         | ret => {?}
         | ret_f => {?}
         | f_sec => {?}
       }
 
-      \func reverse {l l' : L} (seq : SeqLL l l') : SeqLL l' l
-        | (nil, ll p) => (nil, ll (inv p))
-        | (:: nil y, :l: () p)
-        | (:: (:: xs x) y, :l: (:r: seg q) p) =>
-          -- TODO hard... try to define equivalence on SeqLL level instead of SeqLL/~
-          \let (rev-xs, rev-seg) => reverse (xs, seg) \in (nil :: y :: x ++ rev-xs, {?})
+      \func equiv-lemma1 {l l' : L} {seq1 seq2 : SeqLL l l'} (r : seq1 Seq.<~ll~> seq2)
+        : (Seq.reverse-seq-ll seq1) Seq.<~ll~> (Seq.reverse-seq-ll seq2) => {?}
     }
 
   \func inv-seq-rl (l : L) (r : R) : SeqRL/~ r l = SeqLR/~ l r => equiv= (\new QEquiv {_} {_} {
@@ -214,47 +210,8 @@
     | f_sec => {?}
   })
 
-  \func seq-ll-equiv-seq-lr2 (a : A) (l : L) : QEquiv {SeqLL/~ (toL a) l} {SeqRL/~ (toR a) l} =>
+  \func seq-ll-equiv-seq-rl (a : A) (l : L) : QEquiv {SeqLL/~ (toL a) l} {SeqRL/~ (toR a) l} =>
     rewrite (inv-seq-ll (toL a) l) (rewrite (inv-seq-rl l (toR a)) (Seq.seq-ll-equiv-seq-lr l a))
-
-  --  \func seq-ll-equiv-seq-lr2 (a : A) (l : L) : QEquiv {SeqLL/~ (toL a) l} {SeqRL/~ (toR a) l} \cowith
-  --    | f => \case \elim __ \with {
-  --      | in~ seq => in~ (idp:r: seq)
-  --      | ~-equiv seq1 seq2 equiv i => ~-equiv (idp:r: seq1) (idp:r: seq2) (equiv-lemma1 equiv) i
-  --    }
-  --    | ret => \case \elim __ \with {
-  --      | in~ seq => in~ (idp:l: seq)
-  --      | ~-equiv seq1 seq2 equiv i => ~-equiv (idp:l: seq1) (idp:l: seq2) {?} i
-  --    }
-  --    | ret_f => {?}
-  --    | f_sec => {?}
-  --    \where {
-  --      \open Sequence (nil, ::, <~ll~>, <~lr~>)
-  --      -- TODO false positive
-  --
---      \open Sequence.SegmentsLL (ll, :l:)
-  --      \open Sequence.SegmentsLR (:r:)
-  --      \open Sequence.~ll~> (ll-reduce-cons)
-  --      \open Sequence.~lr~> (lr-reduce-cons)
-  --
---      \func idp:r: {l : L} {a : A} (seq : SeqLL (toL a) l) : SeqRL (toR a) l \elim seq
-  --        | (nil, ll p) => (nil :: a, ll idp :r: p)
-  --        | (:: nil y, :l: () p)
-  --        | (:: (:: xs x) y, :l: (:r: seg q) p) =>
-  --          \let (a::xs, idp:r:seg) => idp:r: (xs, seg)
-  --          \in (a::xs :: x :: y, idp:r:seg :l: q :r: p)
-  --
---      \func idp:l: {l : L} {a : A} (seq : SeqRL (toR a) l) : SeqLL (toL a) l \elim seq
-  --        | (nil, ())
-  --        | (:: nil x, :r: (ll p) q) => (nil :: a :: x, ll idp :r: p :l: q)
-  --        | (:: (:: xs y) x, :r: (:l: seg p) q) =>
-  --          \let (a::xs, idp:l:seg) => idp:l: (xs, seg)
-  --          \in (a::xs :: y :: x, idp:l:seg :r: p :l: q)
-  --
---      \func equiv-lemma1 {l : L} {a : A} {seq1 : SeqLL (toL a) l} {seq2 : SeqLL (toL a) l} (equiv : seq1 Seq.<~ll~> seq2)
-  --        : idp:r: seq1 InvSeq.<~lr~> idp:r: seq2 =>
-  --        {?} -- TODO we do not have a rule for such redunctions...
-  --    }
 }
 
 \class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) {
@@ -271,10 +228,9 @@
     | pinr c, pinr c' => SequenceCB.SeqLL/~ c c'
     | pinl b, pinr c => SequenceBC.SeqLR/~ b c
     | pinr c, pinl b => SequenceCB.SeqLR/~ c b
-    -- TODO if I extract the left argument of @ to a function, typechecking fails for some reason.
     | pinl b, pglue a => equiv= (SequenceBC.seq-ll-equiv-seq-lr b a)
     | pinr c, pglue a => inv (equiv= (SequenceCB.seq-ll-equiv-seq-lr c a))
-    | pglue a, pinl b => equiv= (SequencesBC.seq-ll-equiv-seq-lr2 a b)
-    | pglue a, pinr c => inv (equiv= (SequencesCB.seq-ll-equiv-seq-lr2 a c))
+    | pglue a, pinl b => equiv= (SequencesBC.seq-ll-equiv-seq-rl a b)
+    | pglue a, pinr c => inv (equiv= (SequencesCB.seq-ll-equiv-seq-rl a c))
     | pglue a i, pglue a' i' => {?} -- TODO be brave
 }

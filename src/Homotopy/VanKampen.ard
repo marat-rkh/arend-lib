@@ -186,7 +186,7 @@
       -- TODO false positive
       \open Sequence.SegmentsLL (ll, :l:)
       \open Sequence.SegmentsLR (:r:)
-      \open Sequence.~ll~> (ll-reduce-cons)
+      \open Sequence.~ll~> (ll-reduce-cons, ll-reduce-q-idp1, ll-reduce-q-idp2)
       \open Sequence.~lr~> (lr-reduce-cons)
 
       \func equiv (l l' : L) : QEquiv {SeqLL/~ l l'} {SeqLL/~ l' l} \cowith {
@@ -200,7 +200,30 @@
       }
 
       \func equiv-lemma1 {l l' : L} {seq1 seq2 : SeqLL l l'} (r : seq1 Seq.<~ll~> seq2)
-        : (Seq.reverse-seq-ll seq1) Seq.<~ll~> (Seq.reverse-seq-ll seq2) => {?}
+        : (Seq.reverse-seq-ll seq1) Seq.<~ll~> (Seq.reverse-seq-ll seq2) =>
+        Or.map (reduce-lemma __) (reduce-lemma __) r
+        \where {
+          \func reduce-lemma {l l' : L} {seq1 seq2 : SeqLL l l'} (r : seq1 Seq.~ll~> seq2)
+            : (Seq.reverse-seq-ll seq1) Seq.~ll~> (Seq.reverse-seq-ll seq2) \elim seq1, seq2, r
+            | (:: (:: nil a) a', :l: (:r: (ll p1) q1) p2), (nil, ll p12'), ll-reduce-q-idp1 a=a' q1=idp p1*>p2=p12' =>
+              ll-reduce-q-idp1 (inv a=a') {?} {?} -- TODO need to understand transport deeply
+            | (:: (:: (:: xs y) a) a', :l: (:r: (:l: seq p1) q1) p2)
+            , (:: xs' y', :l: seq' p12')
+            , ll-reduce-q-idp2 xs=xs' y=y' p a=a' q1=idp p1*>p2=p12' =>
+              {?} -- TODO here we see helpers, it is hard to work with them as they do not evaluate
+                  --  1. We can try to change the implementation to something like reverse-pts via ++
+                  --  2. We can try Agda style formalization, where there is no explicit list of Points.
+            | (:: xs y, :l: seq p), (:: xs' y', :l: seq' p'), ll-reduce-cons y=y' reduce-lr p=p' =>
+              {?}
+            \where {
+              \func trans-lemma {a : A} {a' : A} (a=a' : a = a') (q1 : toR a = toR a')
+                                (q1=idp : transport (\lam x0 => toR x0 = toR a') a=a' q1 = idp)
+                : transport (\lam x0 => toR x0 = toR a) (inv a=a') (inv q1) = idp \elim a=a'
+                | idp => {?}
+            }
+
+          --          \func transport-lemma  => {?}
+        }
     }
 
   \func inv-seq-rl (l : L) (r : R) : SeqRL/~ r l = SeqLR/~ l r => equiv= (\new QEquiv {_} {_} {

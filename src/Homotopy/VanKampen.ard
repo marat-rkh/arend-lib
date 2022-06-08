@@ -20,9 +20,18 @@
     | nil
     | \infixl 5 :: Points A
 
+  \func reverse-pts (xs : Points) : Points
+    | nil => nil
+    | :: xs a => nil :: a ++ reverse-pts xs
+
   \func \infixl 5 ++ (xs ys : Points) : Points \elim ys
     | nil => xs
     | :: ys y => xs ++ ys :: y
+
+  \func ++-assoc {xs ys zs : Points} : (xs ++ ys) ++ zs = xs ++ (ys ++ zs) \elim zs
+    | nil => idp
+    | :: zs z => pmap (`:: z) ++-assoc
+
 
   \data SegmentsLL (l : L) (xs : Points) (l' : L) : \Type \elim xs
     | nil => ll (l = l')
@@ -31,9 +40,38 @@
   \data SegmentsLR (l : L) (xs : Points) (r : R) : \Type \elim xs
     | :: xs x => \infixl 5 :r: (SegmentsLL l xs (toL x)) (toR x = r)
 
+  \func reverse-seg-ll {l l' : L} {xs : Points} (seg : SegmentsLL l xs l') : SegmentsLL l' (reverse-pts xs) l
+  \elim xs, seg
+    | nil, ll p => ll (inv p)
+    | :: xs y, :l: seg p => helper-lr seg (ll (inv p))
+    \where {
+      \func helper-lr {l : L} {xs : Points} {a : A}
+                      (seg : SegmentsLR l xs (toR a))
+                      {l' : L} {ys : Points}
+                      (acc : SegmentsLL l' ys (toL a)) : SegmentsLL l' (ys :: a ++ reverse-pts xs) l \elim xs, seg
+        | :: xs a', :r: seg q =>
+          \let rec => helper-ll seg (:r: acc (inv q))
+            -- TODO replacing `inv ++-assoc` with `++-assoc` leads to IOOB exception
+          \in rewrite (inv ++-assoc) rec
+
+      \func helper-ll {l : L} {xs : Points} {a : A}
+                      (seg : SegmentsLL l xs (toL a))
+                      {l' : L} {ys : Points}
+                      (acc : SegmentsLR l' ys (toR a)) : SegmentsLL l' (ys :: a ++ reverse-pts xs) l \elim xs, seg
+        | nil, ll p => acc :l: inv p
+        | :: xs a', :l: seg p =>
+          \let rec => helper-lr seg (:l: acc (inv p))
+          \in rewrite (inv ++-assoc) rec
+    }
+
+
   \func SeqLL (l l' : L) => Given {xs} (SegmentsLL l xs l')
 
   \func SeqLR (l : L) (r : R) => Given {xs} (SegmentsLR l xs r)
+
+  \func reverse-seq-ll {l l' : L} (seq : SeqLL l l') : SeqLL l' l \elim seq
+    | (xs, seg) => (reverse-pts xs, reverse-seg-ll seg)
+
 
   -- TODO why do we need this \oo-Type?
 

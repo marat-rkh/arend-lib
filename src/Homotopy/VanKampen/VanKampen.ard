@@ -9,7 +9,7 @@
 \import Set
 \open PushoutData (ppglue)
 
-\class VanKampen \noclassifying (A B C : \Type) (f : A -> B) (g : A -> C) (b0 : B) {
+\class VanKampen \noclassifying {A B C : \Type} (f : A -> B) (g : A -> C) (b0 : B) {
   \truncated \data CodeB (b : B) : \Set
     | bb (b0 = b)
     | \infixl 5 :bb: {x y : A} (CodeB (f x)) (\Sigma (g x = g y) (f y = b))

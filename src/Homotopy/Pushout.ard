@@ -3,6 +3,7 @@
 \import Equiv.Sigma
 \import Equiv.Univalence
 \import Function
+\import Function.Meta
 \import Homotopy.Pointed
 \import Homotopy.Square
 \import Paths
@@ -131,6 +132,11 @@
               | (pglue x i, t) => tglue x i t
           }
       }
+
+    \func flip {A B C : \Type} {f : A -> B} {g : A -> C} (p : PushoutData f g) : PushoutData g f
+      | pinl b => pinr b
+      | pinr c => pinl c
+      | pglue a => inv $ ppglue a
   }
 
 \open PushoutData

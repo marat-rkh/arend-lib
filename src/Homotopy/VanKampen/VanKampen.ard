@@ -1,6 +1,6 @@
 \import Equiv
 \import Equiv.Sigma
-\import Function.Meta ($, repeat)
+\import Function.Meta (repeat)
 \import Homotopy.Pushout
 \import Homotopy.VanKampen.Paths0
 \import Meta
@@ -37,14 +37,13 @@
     | pinl b => CodeB b
     | pinr c => CodeC c
     | pglue a => equiv= code-b-equiv-code-c
-    \where {
-      \func code-b-equiv-code-c {a : A} : QEquiv {CodeB (f a)} {CodeC (g a)} \cowith
-        | f => __ :cc: idp
-        | ret => :bb:idp
-        | ret_f => code-b-idp-idp=code-b
-        | f_sec (co : CodeC (g a)) : co `:bb:idp :cc: idp = co \with {
-          | :cc: co p => path (cc-quot _ _ _)
-        }
+
+  \func code-b-equiv-code-c {a : A} : QEquiv {CodeB (f a)} {CodeC (g a)} \cowith
+    | f => __ :cc: idp
+    | ret => :bb:idp
+    | ret_f => code-b-idp-idp=code-b
+    | f_sec (co : CodeC (g a)) : co `:bb:idp :cc: idp = co \with {
+      | :cc: co p => path (cc-quot _ _ _)
     }
 
   \func po0 : PushoutData f g => pinl b0
@@ -162,52 +161,4 @@
             | :cc: _ _ => idp
         }
     }
-}
-
-\class VanKampen2 \noclassifying {A B C : \Type} (i : A -> B) (j : A -> C) {
-  \func code2(po1 po2 : PushoutData i j) : \Set
-    | pinl b1, po2 => b-code b1 po2
-    | pinr c1, po2 => c-code c1 po2
-    | pglue a1, po2 => equiv= $ b-code-equiv-c-code a1 po2
-    \where {
-      \open VanKampen (code)
-      -- TODO false positive "redundan open"
-      \open VanKampen.CodeB
-      \open VanKampen.CodeC
-
-      \func vk (b : B) => \new VanKampen i j b
-
-      \func vk-flip (c : C) => \new VanKampen j i c
-
-      \func b-code (b : B) (po : PushoutData i j) => code {\new VanKampen i j b} po
-
-      \func c-code (c : C) (po : PushoutData i j) => code {\new VanKampen j i c} (PushoutData.flip po)
-
-      \func b-code-equiv-c-code (a : A) (po : PushoutData i j) : QEquiv {b-code (i a) po} {c-code (j a) po} \cowith
-        | f => b-code=>c-code a po
-        | ret => {?}
-        | ret_f => {?}
-        | f_sec => {?}
-
-      \func b-code=>c-code (a : A) (po : PushoutData i j) (bc : b-code (i a) po) : c-code (j a) po \elim po, bc
-        | pinl b, bb p => bb idp :cc: p
-        | pinl b, :bb: {x} {y} co (q, p) => \case b-code=>c-code a (pinl (i x)) co \with {
-          | :cc: c-co p2 => c-co :bb: (p2, q) :cc: p
-          | cc-quot c-co q1 q2 => pmap (__ :cc: {vk-flip _} p) (path (bb-quot3 {vk-flip _} _ _ _ _))
-        }
-        | pinl b, bb-quot1 p1 p2 => path (cc-quot {vk-flip _} _ _ _)
-        | pinl b, bb-quot2 co q p1 p2 => mcases {2} \with {
-          | :cc: c-co p3 => path (cc-quot {vk-flip _} _ _ _)
-          | cc-quot c-co q1 q2 i => path (cc-quot {vk-flip _} _ _ _)
-        }
-        | pinl b, bb-quot3 co q1 q2 p => mcases {2} \with {
-          | :cc: c-co p3 => pmap (__ :cc: {vk-flip _} p) (path (bb-quot2 {vk-flip _} _ _ _ _))
-          | cc-quot c-co q1 q2 i => {?}
-        }
-        | pinr c, :cc: c1 p => {?}
-        | pinr c, cc-quot co q1 q2 i1 => {?}
-        | pglue a1 i1, bc => {?}
-    }
-
-  \func Loop1-Pushout (po : PushoutData i j) : (po =0 po) = code2 po po => {?}
 }

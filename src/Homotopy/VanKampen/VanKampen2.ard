@@ -1,0 +1,40 @@
+\import Equiv (QEquiv, symQEquiv, transQEquiv)
+\import Equiv.Sigma
+\import Function.Meta
+\import Homotopy.Pushout
+\import Homotopy.VanKampen.Paths0
+\import Homotopy.VanKampen.VanKampen
+\import Meta
+\import Paths.Meta
+\open VanKampen (CodeB, CodeC)
+-- TODO false positive "redundan open"
+
+\class VanKampen2 \noclassifying {A B C : \Type} (f : A -> B) (g : A -> C) {
+  \func code2(po1 po2 : PushoutData f g) : \Set
+    | pinl b1, po2 => b-code b1 po2
+    | pinr c1, po2 => c-code c1 po2
+    | pglue a1, po2 => equiv= $ b-code-equiv-c-code a1 po2
+    \where {
+      \func vk (b : B) => \new VanKampen f g b
+
+      \func vk-flip (c : C) => \new VanKampen g f c
+
+      \func b-code (b : B) (po : PushoutData f g) => VanKampen.code {vk b} po
+
+      \func c-code (c : C) (po : PushoutData f g) => VanKampen.code {vk-flip c} (PushoutData.flip po)
+
+      \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : QEquiv {b-code (f a) po} {c-code (g a) po} \elim po
+        | pinl b =>
+          CodeB-reverse-lemma {_} {f a} {b} `transQEquiv`
+          VanKampen.code-b-equiv-code-c {vk b} `transQEquiv`
+          CodeC-reverse-lemma {_} {b} {g a}
+        | pinr c => {?}
+        | pglue a i => {?}
+
+      \func CodeB-reverse-lemma {b1 b2 : B} : QEquiv {CodeB {vk b1} b2} {CodeB {vk b2} b1} => {?}
+
+      \func CodeC-reverse-lemma {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
+    }
+
+  \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}
+}

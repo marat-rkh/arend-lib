@@ -1,13 +1,11 @@
-\import Equiv (QEquiv, symQEquiv, transQEquiv)
+\import Equiv (QEquiv, transQEquiv)
 \import Equiv.Sigma
 \import Function.Meta
 \import Homotopy.Pushout
 \import Homotopy.VanKampen.Paths0
 \import Homotopy.VanKampen.VanKampen
-\import Meta
-\import Paths.Meta
+\import Paths
 \open VanKampen (CodeB, CodeC)
--- TODO false positive "redundan open"
 
 \class VanKampen2 \noclassifying {A B C : \Type} (f : A -> B) (g : A -> C) {
   \func code2(po1 po2 : PushoutData f g) : \Set
@@ -25,15 +23,37 @@
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : QEquiv {b-code (f a) po} {c-code (g a) po} \elim po
         | pinl b =>
-          CodeB-reverse-lemma {_} {f a} {b} `transQEquiv`
+          CodeB-equiv-inverted-CodeB `transQEquiv`
           VanKampen.code-b-equiv-code-c {vk b} `transQEquiv`
-          CodeC-reverse-lemma {_} {b} {g a}
+          CodeC-equiv-inverted-CodeC {_} {b} {g a}
         | pinr c => {?}
         | pglue a i => {?}
 
-      \func CodeB-reverse-lemma {b1 b2 : B} : QEquiv {CodeB {vk b1} b2} {CodeB {vk b2} b1} => {?}
+      \func CodeB-equiv-inverted-CodeB {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
+        | f => inv1 __
+        | ret => inv2 __
+        | ret_f => {?}
+        | f_sec => {?}
+        \where {
+          -- TODO false positive
+          \open CodeB
 
-      \func CodeC-reverse-lemma {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
+          \func inv1 {a : A} {b : B} (co : CodeB {vk (f a)} b) : CodeB {vk b} (f a) => {?}
+
+          \func inv2 {a : A} {b : B} (co : CodeB {vk b} (f a)) : CodeB {vk (f a)} b =>
+            inv2-helper (bb idp) co
+
+          \func inv2-helper {a1 a2 : A} {b : B} (acc : CodeB {vk (f a1)} (f a2)) (co : CodeB {vk b} (f a2))
+            : CodeB {vk (f a1)} b
+          \elim co
+            | bb p => acc :bb: (idp, inv p)
+            | :bb: co (q, p) => inv2-helper (acc :bb: (idp, inv p) :bb: (inv q, idp)) co
+            | bb-quot1 p1 p2 => {?}
+            | bb-quot2 co q p1 p2 => {?}
+            | bb-quot3 co q1 q2 p => {?}
+        }
+
+      \func CodeC-equiv-inverted-CodeC {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
     }
 
   \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}

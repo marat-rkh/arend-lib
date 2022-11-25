@@ -1,4 +1,4 @@
-\import Equiv (QEquiv, transQEquiv)
+\import Equiv (QEquiv, symQEquiv, transQEquiv)
 \import Equiv.Sigma
 \import Function.Meta
 \import Homotopy.Pushout
@@ -25,66 +25,71 @@
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : QEquiv {b-code (f a) po} {c-code (g a) po} \elim po
         | pinl b =>
-          code-b-equiv-reversed-code-b `transQEquiv`
-          VanKampen.code-b-equiv-code-c {vk b} `transQEquiv`
-          code-c-equiv-reversed-code-c {_} {b} {g a}
-        | pinr c => {?}
+          CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk} `transQEquiv`
+          VanKampen.code-b-equiv-code-c {vk _} `transQEquiv`
+          code-c-equiv-reversed-code-c
+        | pinr c =>
+          code-c-equiv-reversed-code-c `transQEquiv`
+          symQEquiv (VanKampen.code-b-equiv-code-c {vk-flip _}) `transQEquiv`
+          symQEquiv (CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk-flip})
         | pglue a i => {?}
 
-      \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
-        | f => reverse __
-        | ret => reverse __
-        | ret_f => reverse-involution
-        | f_sec => reverse-involution
-        \where {
-          -- TODO false positive
-          \open CodeB
+      \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : \Pi (b0 : B) -> VanKampen f g b0) {
+        \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
+          | f => reverse __
+          | ret => reverse __
+          | ret_f => reverse-involution
+          | f_sec => reverse-involution
+          \where {
+            -- TODO false positive
+            \open CodeB
 
-          \func reverse {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
-            | bb p => bb (inv p)
-            | :bb: co (q, p) => reverse-acc (bb (inv p)) co q
-            | bb-quot1 p1 p2 => path (bb-quot1 {vk _} _ _) *> rewrite (*>_inv-comm _ _) idp
-            | bb-quot2 co q p1 p2 => pmap (reverse-acc __ co q) (
-              path (bb-quot1 {vk _} _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
-            )
-            | bb-quot3 co q1 q2 p => reverse-acc-lemma _ _ _ _
+            \func reverse {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
+              | bb p => bb (inv p)
+              | :bb: co (q, p) => reverse-acc (bb (inv p)) co q
+              | bb-quot1 p1 p2 => path (bb-quot1 {vk _} _ _) *> rewrite (*>_inv-comm _ _) idp
+              | bb-quot2 co q p1 p2 => pmap (reverse-acc __ co q) (
+                path (bb-quot1 {vk _} _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
+              )
+              | bb-quot3 co q1 q2 p => reverse-acc-lemma _ _ _ _
 
-          \func reverse-acc {a1 a2 : A} {b1 b2 : B}
-                            (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
-            : CodeB {vk b1} b2 \elim co
-            | bb p => acc :bb: (inv q, inv p)
-            | :bb: co (q2, p) => reverse-acc (acc :bb: (inv q, inv p)) co q2
-            | bb-quot1 p1 p2 => path (bb-quot2 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
-            | bb-quot2 co q2 p1 p2 => pmap (reverse-acc __ co q2) (
-              path (bb-quot2 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
-            )
-            | bb-quot3 co q2 q3 p => reverse-acc-lemma _ _ _ _
+            \func reverse-acc {a1 a2 : A} {b1 b2 : B}
+                              (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
+              : CodeB {vk b1} b2 \elim co
+              | bb p => acc :bb: (inv q, inv p)
+              | :bb: co (q2, p) => reverse-acc (acc :bb: (inv q, inv p)) co q2
+              | bb-quot1 p1 p2 => path (bb-quot2 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
+              | bb-quot2 co q2 p1 p2 => pmap (reverse-acc __ co q2) (
+                path (bb-quot2 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
+              )
+              | bb-quot3 co q2 q3 p => reverse-acc-lemma _ _ _ _
 
-          \func reverse-acc-lemma {a1 a2 a3 : A} {b1 b2 : B}
-                                  (acc : CodeB {vk b1} (f a1)) (q1 : g a3 = g a1)
-                                  (co : CodeB {vk b2} (f a2)) (q2 : g a2 = g a3)
-            : reverse-acc (acc :bb: (inv q1, idp)) co q2 = reverse-acc acc co (q2 *> q1) \elim co
-            | bb p => path (bb-quot3 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
-            | :bb: co (q, p) => pmap (reverse-acc __ co q) (
-              path (bb-quot3 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm _ _)) idp
-            )
+            \func reverse-acc-lemma {a1 a2 a3 : A} {b1 b2 : B}
+                                    (acc : CodeB {vk b1} (f a1)) (q1 : g a3 = g a1)
+                                    (co : CodeB {vk b2} (f a2)) (q2 : g a2 = g a3)
+              : reverse-acc (acc :bb: (inv q1, idp)) co q2 = reverse-acc acc co (q2 *> q1) \elim co
+              | bb p => path (bb-quot3 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
+              | :bb: co (q, p) => pmap (reverse-acc __ co q) (
+                path (bb-quot3 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm _ _)) idp
+              )
 
-          \func reverse-involution {b1 b2 : B} (co : CodeB {vk b1} b2) : reverse (reverse co) = co
-            | bb p => rewrite (inv_inv p) idp
-            | :bb: co (q, p) => run {
-              rewrite (reverse-acc-involution (bb (inv p)) co q),
-              repeat {2} (rewrite (inv_inv _)) idp
-            }
+            \func reverse-involution {b1 b2 : B} (co : CodeB {vk b1} b2) : reverse (reverse co) = co
+              | bb p => rewrite (inv_inv p) idp
+              | :bb: co (q, p) => run {
+                rewrite (reverse-acc-involution (bb (inv p)) co q),
+                repeat {2} (rewrite (inv_inv _)) idp
+              }
 
-          \func reverse-acc-involution {a1 a2 : A} {b1 b2 : B}
-                                       (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
-            : reverse (reverse-acc acc co q) = reverse-acc co acc (inv q) \elim co
-            | bb p2 => rewrite (inv_inv p2) idp
-            | :bb: co (q2, p2) => run {
-              rewrite (reverse-acc-involution _ co q2),
-              repeat {2} (rewrite (inv_inv _)) idp
-            }
-        }
+            \func reverse-acc-involution {a1 a2 : A} {b1 b2 : B}
+                                         (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
+              : reverse (reverse-acc acc co q) = reverse-acc co acc (inv q) \elim co
+              | bb p2 => rewrite (inv_inv p2) idp
+              | :bb: co (q2, p2) => run {
+                rewrite (reverse-acc-involution _ co q2),
+                repeat {2} (rewrite (inv_inv _)) idp
+              }
+          }
+      }
 
       \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
     }

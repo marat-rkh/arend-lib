@@ -25,73 +25,52 @@
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : QEquiv {b-code (f a) po} {c-code (g a) po} \elim po
         | pinl b =>
-          CodeB-equiv-inverted-CodeB `transQEquiv`
+          CodeB-equiv-reversed-CodeB `transQEquiv`
           VanKampen.code-b-equiv-code-c {vk b} `transQEquiv`
           CodeC-equiv-inverted-CodeC {_} {b} {g a}
         | pinr c => {?}
         | pglue a i => {?}
 
-      \func CodeB-equiv-inverted-CodeB {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
-        | f => inv-CodeB __
-        | ret => inv-CodeB __
-        | ret_f => \case \elim __ \with {
-          | bb p => rewrite (inv_inv p) idp
-          | :bb: co (q, p) => lemma1 _ _ _
-        }
-        | f_sec => {?}
+      \func CodeB-equiv-reversed-CodeB {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
+        | f => reverse-CodeB __
+        | ret => reverse-CodeB __
+        | ret_f => reverse-CodeB-involution
+        | f_sec => reverse-CodeB-involution
         \where {
           -- TODO false positive
           \open CodeB
 
-          \func inv-CodeB {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
+          \func reverse-CodeB {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
             | bb p => bb (inv p)
-            | :bb: co (q, p) => inv-CodeB-helper2 (bb (inv p)) co q
+            | :bb: co (q, p) => reverse-CodeB-acc (bb (inv p)) co q
             | bb-quot1 p1 p2 => {?}
             | bb-quot2 co q p1 p2 => {?}
             | bb-quot3 co q1 q2 p => {?}
 
-          \func inv-CodeB-helper2 {a1 a2 : A} {b1 b2 : B} (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
+          \func reverse-CodeB-acc {a1 a2 : A} {b1 b2 : B} (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
             : CodeB {vk b1} b2 \elim co
             | bb p => acc :bb: (inv q, inv p)
-            | :bb: co (q2, p) => inv-CodeB-helper2 (acc :bb: (inv q, inv p)) co q2
+            | :bb: co (q2, p) => reverse-CodeB-acc (acc :bb: (inv q, inv p)) co q2
             | bb-quot1 p1 p2 => path (bb-quot2 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
-            | bb-quot2 co q1 p1 p2 => pmap (\lam t => inv-CodeB-helper2 t co q1) (
+            | bb-quot2 co q1 p1 p2 => pmap (\lam t => reverse-CodeB-acc t co q1) (
               path (bb-quot2 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
             )
             | bb-quot3 co q1 q2 p => {?}
 
-          \func lemma1 {a x y : A} {b : B} (co : CodeB {vk (f a)} (f x)) (q : g x = g y) (p : f y = b)
-            : inv-CodeB (inv-CodeB-helper2 (bb (inv p)) co q) = co :bb: (q, p) \elim co
-            | bb p2 => {?} -- TODO rewrite throws exception here, bug?
-            | :bb: co (q2, p2) => {?} -- TODO
+          \func reverse-CodeB-involution {b1 b2 : B} (co : CodeB {vk b1} b2) : reverse-CodeB (reverse-CodeB co) = co
+            | bb p => rewrite (inv_inv p) idp
+            | :bb: co (q, p) => run {
+              rewrite (reverse-CodeB-acc-involution (bb (inv p)) co q),
+              repeat {2} (rewrite (inv_inv _)) idp
+            }
 
-          \func inv-CodeB-helper {a : A} {b1 b2 : B} (acc : CodeB {vk b1} (f a)) (co : CodeB {vk b2} (f a))
-            : CodeB {vk b1} b2
-          \elim co
-            | bb p => acc :bb: (idp, inv p)
-            | :bb: co (q, p) => inv-CodeB-helper (acc :bb: (idp, inv p) :bb: (inv q, idp)) co
-            | bb-quot1 p1 p2 =>
-              path (bb-quot2 {vk _} _ _ _ _) *>
-              path (bb-quot2 {vk _} _ _ _ _) *>
-              rewrite (helper-lemma p1 p2) idp
-            | bb-quot2 co q p1 p2 =>
-              pmap (\lam t => inv-CodeB-helper (t :bb: (inv q, idp)) co) (
-                path (bb-quot2 {vk _} _ _ _ _) *>
-                path (bb-quot2 {vk _} _ _ _ _) *>
-                rewrite (helper-lemma p1 p2) idp
-              )
-            | bb-quot3 co q1 q2 p =>
-              pmap (\lam t => inv-CodeB-helper t co) (
-                path (bb-quot3 {vk _} _ _ _ _) *>
-                path (bb-quot3 {vk _} _ _ _ _) *>
-                rewrite (helper-lemma q1 q2) idp
-              )
-
-          \func helper-lemma {T : \Type} {t1 t2 t3 : T} (p1 : t1 = t2) (p2 : t2 = t3)
-            : inv p2 *> idp *> inv p1 = inv (p1 *> p2) =>
-            run {
-              rewrite (idp_*> (inv p1)),
-              rewrite (*>_inv-comm p1 p2) idp
+          \func reverse-CodeB-acc-involution {a1 a2 : A} {b1 b2 : B}
+                                             (acc : CodeB {vk b1} (f a1)) (co : CodeB {vk b2} (f a2)) (q : g a2 = g a1)
+            : reverse-CodeB (reverse-CodeB-acc acc co q) = reverse-CodeB-acc co acc (inv q) \elim co
+            | bb p2 => rewrite (inv_inv p2) idp
+            | :bb: co (q2, p2) => run {
+              rewrite (reverse-CodeB-acc-involution _ co q2),
+              repeat {2} (rewrite (inv_inv _)) idp
             }
         }
 

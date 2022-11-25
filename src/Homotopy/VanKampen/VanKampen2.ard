@@ -60,6 +60,15 @@
             )
             | bb-quot3 co q2 q3 p => reverse-acc-lemma _ _ _ _
 
+          \func reverse-acc-lemma {a1 a2 a3 : A} {b1 b2 : B}
+                                  (acc : CodeB {vk b1} (f a1)) (q1 : g a3 = g a1)
+                                  (co : CodeB {vk b2} (f a2)) (q2 : g a2 = g a3)
+            : reverse-acc (acc :bb: (inv q1, idp)) co q2 = reverse-acc acc co (q2 *> q1) \elim co
+            | bb p => path (bb-quot3 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
+            | :bb: co (q, p) => pmap (reverse-acc __ co q) (
+              path (bb-quot3 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm _ _)) idp
+            )
+
           \func reverse-involution {b1 b2 : B} (co : CodeB {vk b1} b2) : reverse (reverse co) = co
             | bb p => rewrite (inv_inv p) idp
             | :bb: co (q, p) => run {
@@ -75,15 +84,6 @@
               rewrite (reverse-acc-involution _ co q2),
               repeat {2} (rewrite (inv_inv _)) idp
             }
-
-          \func reverse-acc-lemma {a1 a2 a3 : A} {b1 b2 : B}
-                                  (acc : CodeB {vk b1} (f a1)) (q1 : g a3 = g a1)
-                                  (co : CodeB {vk b2} (f a2)) (q2 : g a2 = g a3)
-            : reverse-acc (acc :bb: (inv q1, idp)) co q2 = reverse-acc acc co (q2 *> q1) \elim co
-            | bb p => path (bb-quot3 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
-            | :bb: co (q, p) => pmap (reverse-acc __ co q) (
-              path (bb-quot3 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm _ _)) idp
-            )
         }
 
       \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}

@@ -25,13 +25,13 @@
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : QEquiv {b-code (f a) po} {c-code (g a) po} \elim po
         | pinl b =>
-          CodeB-equiv-reversed-CodeB `transQEquiv`
+          code-b-equiv-reversed-code-b `transQEquiv`
           VanKampen.code-b-equiv-code-c {vk b} `transQEquiv`
-          CodeC-equiv-inverted-CodeC {_} {b} {g a}
+          code-c-equiv-reversed-code-c {_} {b} {g a}
         | pinr c => {?}
         | pglue a i => {?}
 
-      \func CodeB-equiv-reversed-CodeB {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
+      \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
         | f => reverse __
         | ret => reverse __
         | ret_f => reverse-involution
@@ -77,7 +77,7 @@
             }
         }
 
-      \func CodeC-equiv-inverted-CodeC {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
+      \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
     }
 
   \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}

@@ -43,8 +43,10 @@
           \func reverse {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
             | bb p => bb (inv p)
             | :bb: co (q, p) => reverse-acc (bb (inv p)) co q
-            | bb-quot1 p1 p2 => {?}
-            | bb-quot2 co q p1 p2 => {?}
+            | bb-quot1 p1 p2 => path (bb-quot1 {vk _} _ _) *> rewrite (*>_inv-comm _ _) idp
+            | bb-quot2 co q p1 p2 => pmap (reverse-acc __ co q) (
+              path (bb-quot1 {vk _} _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
+            )
             | bb-quot3 co q1 q2 p => {?}
 
           \func reverse-acc {a1 a2 : A} {b1 b2 : B}
@@ -53,10 +55,10 @@
             | bb p => acc :bb: (inv q, inv p)
             | :bb: co (q2, p) => reverse-acc (acc :bb: (inv q, inv p)) co q2
             | bb-quot1 p1 p2 => path (bb-quot2 {vk _} _ _ _ _) *> rewrite (*>_inv-comm _ _) idp
-            | bb-quot2 co q1 p1 p2 => pmap (\lam t => reverse-acc t co q1) (
+            | bb-quot2 co q2 p1 p2 => pmap (reverse-acc __ co q2) (
               path (bb-quot2 {vk _} _ _ _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
             )
-            | bb-quot3 co q1 q2 p => {?}
+            | bb-quot3 co q2 q3 p => {?}
 
           \func reverse-involution {b1 b2 : B} (co : CodeB {vk b1} b2) : reverse (reverse co) = co
             | bb p => rewrite (inv_inv p) idp

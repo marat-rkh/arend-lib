@@ -153,6 +153,13 @@
     => propExt (\lam e1 => leftFactor e1 g e) (\lam e2 => rightFactor f e2 e)
 }
 
+\func symEquiv {A B : \Type} (e : Equiv {A} {B}) : Equiv {B} {A} \cowith
+  | f => e.ret
+  | ret => e.f
+  | sec => e.f
+  | ret_f => e.f_ret
+  | f_sec => e.ret_f
+
 \func \fixr 3 transEquiv {A B C : \Type} (e1 : Equiv {A} {B}) (e2 : Equiv {B} {C}) : Equiv {A} {C} \cowith
   | f x => e2 (e1 x)
   | ret y => e1.ret (e2.ret y)

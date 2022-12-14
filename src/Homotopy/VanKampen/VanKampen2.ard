@@ -24,20 +24,15 @@
       \func c-code (c : C) (po : PushoutData f g) => VanKampen.code {vk-flip c} (PushoutData.flip po)
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : Equiv {b-code (f a) po} {c-code (g a) po} \elim po
-        | pinl b => b-case
-        | pinr c => c-case
-        | pglue a2 => pathOver (simp_coe (idp, idp, idp))
-      \where {
-        \func b-case {a : A} {b : B} : Equiv {b-code (f a) (pinl b)} {c-code (g a) (pinl b)} =>
+        | pinl b =>
           CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk} `transEquiv`
           VanKampen.code-b-equiv-code-c {vk _} `transEquiv`
           code-c-equiv-reversed-code-c
-
-        \func c-case {a : A} {c : C} : Equiv {b-code (f a) (pinr c)} {c-code (g a) (pinr c)} =>
+        | pinr c =>
           code-c-equiv-reversed-code-c `transEquiv`
           symEquiv (VanKampen.code-b-equiv-code-c {vk-flip _}) `transEquiv`
           symEquiv (CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk-flip})
-      }
+        | pglue a2 => pathOver (simp_coe (idp, idp, idp))
 
       \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : \Pi (b0 : B) -> VanKampen f g b0) {
         \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith

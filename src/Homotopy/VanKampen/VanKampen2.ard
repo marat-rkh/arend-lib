@@ -24,15 +24,21 @@
       \func c-code (c : C) (po : PushoutData f g) => VanKampen.code {vk-flip c} (PushoutData.flip po)
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : Equiv {b-code (f a) po} {c-code (g a) po} \elim po
-        | pinl b =>
+        | pinl b => b-case
+        | pinr c => c-case
+        -- TODO see transport_inv_func
+        | pglue a2 => pathOver (coe_Equiv {?})
+      \where {
+        \func b-case {a : A} {b : B} : Equiv {b-code (f a) (pinl b)} {c-code (g a) (pinl b)} =>
           CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk} `transEquiv`
           VanKampen.code-b-equiv-code-c {vk _} `transEquiv`
           code-c-equiv-reversed-code-c
-        | pinr c =>
+
+        \func c-case {a : A} {c : C} : Equiv {b-code (f a) (pinr c)} {c-code (g a) (pinr c)} =>
           code-c-equiv-reversed-code-c `transEquiv`
           symEquiv (VanKampen.code-b-equiv-code-c {vk-flip _}) `transEquiv`
           symEquiv (CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk-flip})
-        | pglue a2 => pathOver (simp_coe (idp, idp, idp))
+      }
 
       \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : \Pi (b0 : B) -> VanKampen f g b0) {
         \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
@@ -96,3 +102,12 @@
 
   \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}
 }
+
+\func coe_Equiv {A B : I -> \Type} {e : Equiv {A left} {B left}} {e' : Equiv {A right} {B right}} (p : \Pi (a : A left) -> coe B (e a) right = e' (coe A a right))
+  : coe (\lam i => Equiv {A i} {B i}) e right = e'
+  => transport_Equiv {I} {A} {B} (path (\lam i => i)) p
+
+\func transport_Equiv {A : \Type} {B C : A -> \Type} {a a' : A} (p : a = a') {e : Equiv {B a} {C a}} {e' : Equiv {B a'} {C a'}}
+                      (q : \Pi (a : B a) -> transport C p (e a) = e' (transport B p a))
+  : transport (\lam a => Equiv {B a} {C a}) p e = e' \elim p
+  | idp => Equiv.equals (ext q)

@@ -4,6 +4,7 @@
 \import Homotopy.Pushout
 \import Homotopy.VanKampen.Paths0
 \import Homotopy.VanKampen.VanKampen
+\import Logic.Meta
 \import Meta
 \import Paths
 \import Paths.Meta
@@ -40,7 +41,7 @@
           symEquiv (CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk-flip})
       }
 
-      \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : \Pi (b0 : B) -> VanKampen f g b0) {
+      \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : ∀ b0 (VanKampen f g b0)) {
         \func code-b-equiv-reversed-code-b {a : A} {b : B} : QEquiv {CodeB {vk (f a)} b} {CodeB {vk b} (f a)} \cowith
           | f => reverse __
           | ret => reverse __
@@ -97,7 +98,41 @@
           }
       }
 
-      \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} => {?}
+      \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} \cowith
+        | f => reverse vk vk-flip __
+        | ret => reverse vk-flip vk __
+        | ret_f => {?}
+        | f_sec => {?}
+        \where {
+          -- TODO false positive
+          \open CodeB
+          \open CodeC
+
+          \func reverse {B C : \Type} {f : A -> B} {g : A -> C}
+                        (vk : ∀ b0 (VanKampen f g b0)) (vk-flip : ∀ c0 (VanKampen g f c0))
+                        {b : B} {c : C}
+                        (co : CodeC {vk b} c)
+            : CodeC {vk-flip c} b \elim co
+            | :cc: co p => reverse1-acc vk vk-flip (bb {vk-flip _} (inv p)) co
+            | cc-quot co q1 q2 => pmap (reverse1-acc vk vk-flip __ co) (
+              path (bb-quot1 {vk-flip _} _ _) *> rewrite (inv (*>_inv-comm q1 q2)) idp
+            )
+
+          \func reverse1-acc {B C : \Type} {f : A -> B} {g : A -> C}
+                             (vk : ∀ b0 (VanKampen f g b0)) (vk-flip : ∀ c0 (VanKampen g f c0))
+                             {a : A} {b : B} {c : C}
+                             (acc : CodeB {vk-flip c} (g a)) (co : CodeB {vk b} (f a))
+            : CodeC {vk-flip c} b \elim co
+            | bb p => acc :cc: inv p
+            | :bb: co (q, p) => reverse1-acc vk vk-flip (acc :bb: (inv p, inv q)) co
+            | bb-quot1 p1 p2 => path (cc-quot {vk-flip _} _ _ _) *> rewrite (*>_inv-comm _ _) idp
+            | bb-quot2 co q p1 p2 => pmap (reverse1-acc vk vk-flip __ co) (
+              path (bb-quot3 {vk-flip _} _ _ _ _) *> rewrite (inv (*>_inv-comm p1 p2)) idp
+            )
+            | bb-quot3 co q1 q2 p => pmap (reverse1-acc vk vk-flip __ co) (
+              path (bb-quot2 {vk-flip _} _ _ _ _) *> rewrite (inv (*>_inv-comm q1 q2)) idp
+            )
+        }
     }
 
   \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}

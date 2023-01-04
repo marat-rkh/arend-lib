@@ -101,8 +101,8 @@
       \func code-c-equiv-reversed-code-c {b : B} {c : C} : QEquiv {CodeC {vk b} c} {CodeC {vk-flip c} b} \cowith
         | f => reverse vk vk-flip __
         | ret => reverse vk-flip vk __
-        | ret_f => {?}
-        | f_sec => {?}
+        | ret_f => reverse-involution vk vk-flip
+        | f_sec => reverse-involution vk-flip vk
         \where {
           -- TODO false positive
           \open CodeB
@@ -132,6 +132,27 @@
             | bb-quot3 co q1 q2 p => pmap (reverse-acc vk vk-flip __ co) (
               path (bb-quot2 {vk-flip _} _ _ _ _) *> rewrite (inv (*>_inv-comm q1 q2)) idp
             )
+
+          \func reverse-involution {B C : \Type} {f : A -> B} {g : A -> C}
+                                   (vk : ∀ b0 (VanKampen f g b0)) (vk-flip : ∀ c0 (VanKampen g f c0))
+                                   {b : B} {c : C}
+                                   (co : CodeC {vk b} c)
+            : reverse vk-flip vk (reverse vk vk-flip co) = co \elim co
+            | :cc: co p => run {
+              rewrite (reverse-acc-involution vk vk-flip (bb (inv p)) co),
+              rewrite (inv_inv _) idp
+            }
+
+          \func reverse-acc-involution {B C : \Type} {f : A -> B} {g : A -> C}
+                                       (vk : ∀ b0 (VanKampen f g b0)) (vk-flip : ∀ c0 (VanKampen g f c0))
+                                       {a : A} {b : B} {c : C}
+                                       (acc : CodeB {vk-flip c} (g a)) (co : CodeB {vk b} (f a))
+            : reverse vk-flip vk (reverse-acc vk vk-flip acc co) = reverse-acc vk-flip vk co acc \elim co
+            | bb p => rewrite (inv_inv __) idp
+            | :bb: co (q, p) => run {
+              rewrite (reverse-acc-involution vk vk-flip _ co),
+              repeat {2} (rewrite (inv_inv _)) idp
+            }
         }
     }
 

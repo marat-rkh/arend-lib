@@ -46,6 +46,12 @@
       | :cc: co p => path (cc-quot _ _ _)
     }
 
+  \func transport-code-pglue (x : A) (co : CodeB (f x)) : transport code (ppglue x) co = co :cc: idp => idp
+
+  \func transport-code-pglue2 (x x' : A) (co : CodeB (f x)) (q : g x = g x')
+    : transport code (inv (ppglue x')) (co :cc: q) = (co :cc: q) `:bb:idp =>
+    transport_inv_func code (ppglue x') :bb:idp code-b-idp-idp=code-b (co :cc: q)
+
   \func po0 : PushoutData f g => pinl b0
 
   \func idp-code : code po0 => bb idp
@@ -147,8 +153,6 @@
             | bb _ => idp
             | :bb: _ _ => idp
         }
-
-      \func transport-code-pglue (x : A) (co : CodeB (f x)) : transport code (ppglue x) co = co :cc: idp => idp
 
       \func transport-codeC {c c' : C} (p : c = c') (co : CodeC c) : transport code (pmap pinr p) co = co *cc> p \elim p
         | idp => rewrite (*cc>idp-lemma co) idp

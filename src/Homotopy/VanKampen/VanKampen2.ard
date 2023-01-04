@@ -9,6 +9,7 @@
 \import Paths
 \import Paths.Meta
 \open VanKampen (CodeB, CodeC)
+\open PushoutData (ppglue)
 
 \class VanKampen2 \noclassifying {A B C : \Type} (f : A -> B) (g : A -> C) {
   \func code2(po1 po2 : PushoutData f g) : \Set
@@ -16,6 +17,10 @@
     | pinr c1, po2 => c-code c1 po2
     | pglue a1, po2 => equiv= $ b-code-equiv-c-code a1 po2
     \where {
+      -- TODO false positive
+      \open CodeB
+      \open CodeC
+
       \func vk (b : B) => \new VanKampen f g b
 
       \func vk-flip (c : C) => \new VanKampen g f c
@@ -25,20 +30,35 @@
       \func c-code (c : C) (po : PushoutData f g) => VanKampen.code {vk-flip c} (PushoutData.flip po)
 
       \func b-code-equiv-c-code (a : A) (po : PushoutData f g) : Equiv {b-code (f a) po} {c-code (g a) po} \elim po
-        | pinl b => b-case
-        | pinr c => c-case
-        -- TODO see transport_inv_func
-        | pglue a2 => pathOver (coe_Equiv {?})
+        | pinl b => equiv-b
+        | pinr c => equiv-c
+        | pglue a2 => pathOver (transport_Equiv {PushoutData f g} {b-code (f a) __} {c-code (g a) __} (ppglue a2) pglue-lemma)
       \where {
-        \func b-case {a : A} {b : B} : Equiv {b-code (f a) (pinl b)} {c-code (g a) (pinl b)} =>
+        \func equiv-b {a : A} {b : B} : Equiv {b-code (f a) (pinl b)} {c-code (g a) (pinl b)} =>
           CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk} `transEquiv`
           VanKampen.code-b-equiv-code-c {vk _} `transEquiv`
           code-c-equiv-reversed-code-c
 
-        \func c-case {a : A} {c : C} : Equiv {b-code (f a) (pinr c)} {c-code (g a) (pinr c)} =>
+        \func equiv-c {a : A} {c : C} : Equiv {b-code (f a) (pinr c)} {c-code (g a) (pinr c)} =>
           code-c-equiv-reversed-code-c `transEquiv`
           symEquiv (VanKampen.code-b-equiv-code-c {vk-flip _}) `transEquiv`
           symEquiv (CodeBProperties.code-b-equiv-reversed-code-b {\new CodeBProperties vk-flip})
+
+        \func pglue-lemma {a1 a2 : A} (b : b-code (f a1) (pinl (f a2)))
+          : transport (c-code (g a1)) (ppglue a2) (equiv-b b) = equiv-c (transport (b-code (f a1)) (ppglue a2) b) =>
+          run {
+            rewrite (VanKampen.transport-code-pglue {vk _} a2 _),
+            rewrite (transport-c-code-pglue (equiv-b b)),
+            ({?} :  VanKampen.:bb:idp {vk-flip _} (equiv-b b) = equiv-c (b :cc: idp))
+          }
+
+        \func transport-c-code-pglue {c : C} {a : A} (co : c-code c (pinl (f a))) -- CodeC {vk-flip c} (f a)
+          : transport (c-code c) (ppglue a) co = VanKampen.:bb:idp {vk-flip _} co \elim co
+          | :cc: {a2} co q => {?}
+          -- TODO this doesn't work, something wrong with levels
+        --          VanKampen.transport-code-pglue2 {vk-flip c} a a2 co q
+          -- TODO WIP
+        --          transport_inv_func (c-code c) (ppglue a2) {?} {?} (co :cc: q)
       }
 
       \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : ∀ b0 (VanKampen f g b0)) {
@@ -48,9 +68,6 @@
           | ret_f => reverse-involution
           | f_sec => reverse-involution
           \where {
-            -- TODO false positive
-            \open CodeB
-
             \func reverse {b1 b2 : B} (co : CodeB {vk b1} b2) : CodeB {vk b2} b1 \elim co
               | bb p => bb (inv p)
               | :bb: co (q, p) => reverse-acc (bb (inv p)) co q
@@ -104,10 +121,6 @@
         | ret_f => reverse-involution vk vk-flip
         | f_sec => reverse-involution vk-flip vk
         \where {
-          -- TODO false positive
-          \open CodeB
-          \open CodeC
-
           \func reverse {B C : \Type} {f : A -> B} {g : A -> C}
                         (vk : ∀ b0 (VanKampen f g b0)) (vk-flip : ∀ c0 (VanKampen g f c0))
                         {b : B} {c : C}
@@ -159,11 +172,14 @@
   \func Loop1-Pushout (po : PushoutData f g) : (po =0 po) = code2 po po => {?}
 }
 
-\func coe_Equiv {A B : I -> \Type} {e : Equiv {A left} {B left}} {e' : Equiv {A right} {B right}} (p : \Pi (a : A left) -> coe B (e a) right = e' (coe A a right))
+-- TODO unused?
+\func coe_Equiv {A B : I -> \Type} {e : Equiv {A left} {B left}} {e' : Equiv {A right} {B right}}
+                (f : \Pi (a : A left) -> coe B (e a) right = e' (coe A a right))
   : coe (\lam i => Equiv {A i} {B i}) e right = e'
-  => transport_Equiv {I} {A} {B} (path (\lam i => i)) p
+  => transport_Equiv {I} {A} {B} (path (\lam i => i)) f
 
-\func transport_Equiv {A : \Type} {B C : A -> \Type} {a a' : A} (p : a = a') {e : Equiv {B a} {C a}} {e' : Equiv {B a'} {C a'}}
-                      (q : \Pi (a : B a) -> transport C p (e a) = e' (transport B p a))
+\func transport_Equiv {A : \Type} {B C : A -> \Type} {a a' : A} (p : a = a')
+                      {e : Equiv {B a} {C a}} {e' : Equiv {B a'} {C a'}}
+                      (f : \Pi (b : B a) -> transport C p (e b) = e' (transport B p b))
   : transport (\lam a => Equiv {B a} {C a}) p e = e' \elim p
-  | idp => Equiv.equals (ext q)
+  | idp => Equiv.equals (ext f)

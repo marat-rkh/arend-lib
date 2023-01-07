@@ -29,6 +29,10 @@
     | :cc: co p => co :bb: (p, idp)
     | cc-quot co q1 q2 => path (bb-quot3 _ _ _ _)
 
+  \func code-c-append2 {a a' : A} {c : C} (co : CodeC (g a)) (pair : \Sigma (f a = f a') (g a' = c)) : CodeC c \elim co
+    | :cc: co p' => (co :bb: (p', pair.1)) :cc: pair.2
+    | cc-quot co q1 q2 => pmap (__ :cc: pair.2) (path (bb-quot3 _ _ _ _))
+
   \func code-b-idp-idp=code-b {a : A} (co : CodeB (f a)) : co :bb: (idp, idp) = co
     | bb p => path (bb-quot1 _ _)
     | :bb: co (q, p) => path (bb-quot2 _ _ _ _)

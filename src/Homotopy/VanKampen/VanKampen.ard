@@ -46,9 +46,9 @@
       | :cc: co p => path (cc-quot _ _ _)
     }
 
-  \func transport-code-pglue (x : A) (co : CodeB (f x)) : transport code (ppglue x) co = co :cc: idp => idp
+  \func transport-code-b-pglue (x : A) (co : CodeB (f x)) : transport code (ppglue x) co = co :cc: idp => idp
 
-  \func transport-code-pglue2 (x x' : A) (co : CodeB (f x)) (q : g x = g x')
+  \func transport-code-c-inv-pglue (x x' : A) (co : CodeB (f x)) (q : g x = g x')
     : transport code (inv (ppglue x')) (co :cc: q) = (co :cc: q) `:bb:idp =>
     transport_inv_func code (ppglue x') :bb:idp code-b-idp-idp=code-b (co :cc: q)
 
@@ -130,7 +130,7 @@
           rewrite (decode-encode co),
           rewrite (transport_*> code {pinl (f x)} {pinr (g x)} {pinl b} _ _ _),
         -- TODO I do not need this, but without it the expected type contains "redundant" transport
-          rewrite (transport-code-pglue x co),
+          rewrite (transport-code-b-pglue x co),
           rewrite (transport_*> code {pinr (g x)} {pinr (g y)} {pinl b} _ _ _),
           rewrite (transport-codeC _ _),
           rewrite (transport_*> code {pinr (g y)} {pinl (f y)} {pinl b} _ _ _),

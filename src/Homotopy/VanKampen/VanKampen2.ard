@@ -47,18 +47,14 @@
         \func pglue-lemma {a1 a2 : A} (b : b-code (f a1) (pinl (f a2)))
           : transport (c-code (g a1)) (ppglue a2) (equiv-b b) = equiv-c (transport (b-code (f a1)) (ppglue a2) b) =>
           run {
-            rewrite (VanKampen.transport-code-pglue {vk _} a2 _),
-            rewrite (transport-c-code-pglue (equiv-b b)),
+            rewrite (VanKampen.transport-code-b-pglue {vk _} a2 _),
+            rewrite (transport-code-c-inv-pglue (equiv-b b)),
             ({?} :  VanKampen.:bb:idp {vk-flip _} (equiv-b b) = equiv-c (b :cc: idp))
           }
 
-        \func transport-c-code-pglue {c : C} {a : A} (co : c-code c (pinl (f a))) -- CodeC {vk-flip c} (f a)
+        \func transport-code-c-inv-pglue {c : C} {a : A} (co : c-code c (pinl (f a)))
           : transport (c-code c) (ppglue a) co = VanKampen.:bb:idp {vk-flip _} co \elim co
-          | :cc: {a2} co q => {?}
-          -- TODO this doesn't work, something wrong with levels
-        --          VanKampen.transport-code-pglue2 {vk-flip c} a a2 co q
-          -- TODO WIP
-        --          transport_inv_func (c-code c) (ppglue a2) {?} {?} (co :cc: q)
+          | :cc: {a'} co q => VanKampen.transport-code-c-inv-pglue {vk-flip c} a' a co q
       }
 
       \class CodeBProperties \noclassifying {A B C : \Type} {f : A -> B} {g : A -> C} (vk : ∀ b0 (VanKampen f g b0)) {
